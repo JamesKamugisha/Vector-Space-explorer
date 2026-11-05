@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.vercel/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+test-results/
+playwright-report/
+artifacts/
+Vector_Space_Explorer_Developer_Package.zip
+Vector_Space_Explorer_Product_and_3D_Technical_Spec.pdf
+docs/source/
+IMPLEMENTATION_PLAN.md
+TASK_CHECKLIST.md
