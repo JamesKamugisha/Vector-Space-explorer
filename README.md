@@ -2,6 +2,8 @@
 
 An interactive linear algebra learning app with a shared Z-up Three.js workspace and two scenarios: Vector Math Lab and AI & LLM Lab.
 
+Live app: https://vector-space-explorer-lac.vercel.app/
+
 ## Run locally
 
 Requires Node.js 22.12 or newer (Node.js 24 recommended), npm, and a modern browser. WebGL powers the visualization; numeric results and worked steps remain available without it.
@@ -48,6 +50,8 @@ npm run test:e2e
 Browser tests use installed Google Chrome through Playwright. If Chrome is unavailable, install its official Playwright-managed distribution with `npx playwright install chrome`. Browser tests start a local Vite server on port 5174 automatically when needed. To test a deployment, set `TEST_BASE_URL` to its URL before running the suite.
 
 Tests verify numerical identities and edge cases, all lesson interactions, scenario changes, input/playback synchronization, AI ranking and source provenance, mobile overflow, reduced motion, and WebGL fallback. See `VERIFICATION.md` for the recorded delivery checks and practical limits.
+
+For the synthetic 500-point scene profile, start the local development server on port 5174 and run `npm run profile:scene`. The test-only fixture is excluded from the production entry point. It records FPS/resource samples, checks orbit interaction and remount cleanup, and writes ignored artifacts locally. `PROFILE_BASE_URL` can override the local server address.
 
 ## Deploy through GitHub to Vercel
 

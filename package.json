@@ -13,7 +13,8 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "format": "prettier --write src tests *.json *.ts eslint.config.js",
-    "format:check": "prettier --check src tests *.json *.ts eslint.config.js"
+    "format:check": "prettier --check src tests *.json *.ts eslint.config.js",
+    "profile:scene": "node scripts/profile-scene.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
