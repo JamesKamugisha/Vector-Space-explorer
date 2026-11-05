@@ -68,6 +68,46 @@ export const corpus: AiDocument[] = [
   },
 ];
 
+export const MIN_POINT_COUNT = 8;
+export const MAX_POINT_COUNT = 500;
+
+export function clampPointCount(count: number): number {
+  return Number.isFinite(count)
+    ? Math.min(MAX_POINT_COUNT, Math.max(MIN_POINT_COUNT, Math.floor(count)))
+    : MIN_POINT_COUNT;
+}
+
+/** Repeatable synthetic examples expand the teaching cloud, never a real corpus. */
+export function buildCorpus(count: number): AiDocument[] {
+  const size = clampPointCount(count);
+  const documents = corpus.map((document) => ({
+    ...document,
+    vector: [...document.vector] as TeachingVector,
+  }));
+  const fraction = (value: number) => value - Math.floor(value);
+  for (let index = corpus.length; index < size; index++) {
+    const original = corpus[(index - corpus.length) % corpus.length];
+    const serial = String(index + 1).padStart(3, "0");
+    const magnitude = 0.55 + 1.1 * fraction((index + 1) * 0.61803398875);
+    const vector = original.vector.map((coordinate, axis) =>
+      Number(
+        (
+          coordinate * magnitude +
+          0.7 * fraction((index + 1) * (axis + 1) * 0.41421356237)
+        ).toFixed(5),
+      ),
+    ) as TeachingVector;
+    documents.push({
+      id: `synthetic-${serial}`,
+      title: `${original.title} · ${serial}`,
+      text: `Synthetic teaching example ${serial}: ${original.text}`,
+      vector,
+      category: `${original.category} · synthetic`,
+    });
+  }
+  return documents;
+}
+
 export const featureNames = [
   "Account access",
   "Workplace policy",
@@ -170,10 +210,11 @@ export function euclideanDistance(
 export function rankDocuments(
   query: TeachingVector,
   metric: AiMetric,
+  documents: AiDocument[] = corpus,
 ): Array<{ document: AiDocument; score: number | null }> {
   // A zero query means no teaching vocabulary matched, not a meaningful search.
   const validQuery = finite(query) && length(query) > 0;
-  return corpus
+  return documents
     .map((document) => ({
       document,
       score: validQuery
@@ -210,8 +251,9 @@ export function retrieveContext(
   query: TeachingVector,
   metric: AiMetric,
   limit = 2,
+  documents: AiDocument[] = corpus,
 ): AiDocument[] {
-  return rankDocuments(query, metric)
+  return rankDocuments(query, metric, documents)
     .filter(
       (item) =>
         item.score !== null &&

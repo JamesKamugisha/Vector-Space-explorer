@@ -1492,3 +1492,428 @@ button {
 .help-dialog > .help-fine-print {
   color: #50667f;
 }
+
+.mobile-controls-toggle {
+  display: none;
+}
+.ai-view-switch {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 16px 16px 0;
+}
+.ai-view-switch button {
+  background: #f2f6fc;
+  color: #50667f;
+  border: 1px solid #dbe5f2;
+  font-size: 11px;
+  padding: 7px 8px;
+}
+.ai-view-switch button[aria-pressed="true"] {
+  background: #dfeafa;
+  border-color: #9dbce8;
+  color: #254f8b;
+}
+.vector-details {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 0 0 18px;
+}
+.vector-detail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.vector-detail-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #50667f;
+  font-weight: 600;
+}
+.vector-detail-heading select {
+  max-width: 50%;
+  border: 1px solid #dbe4ee;
+  background: #f8fafc;
+  color: #365675;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+.vector-details dl {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 15px 0 9px;
+}
+.vector-details dt {
+  font-size: 11px;
+  color: #536b85;
+}
+.vector-details dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #254c72;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.vector-details > p {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #50667f;
+  line-height: 1.7;
+}
+.domain-example {
+  border-top: 1px solid #e6edf4;
+  margin-top: 14px;
+  padding-top: 12px;
+}
+.layer-bar > div {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.analogy-lesson {
+  padding: 20px 18px;
+  color: #3c5570;
+}
+.analogy-lesson h3 {
+  font-size: 18px;
+  color: #244565;
+}
+.analogy-lesson p,
+.analogy-lesson li {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.analogy-lesson label {
+  display: block;
+  font-weight: 600;
+  margin: 17px 0 8px;
+}
+.analogy-lesson select {
+  width: 100%;
+  border: 1px solid #c6d5e8;
+  background: #f5f9ff;
+  color: #294f78;
+  padding: 10px;
+}
+.analogy-equation {
+  background: #f0f7f5;
+  border: 1px solid #d5e8e0;
+  border-radius: 7px;
+  margin: 20px 0;
+  padding: 14px;
+  font-size: 13px;
+}
+.analogy-equation strong {
+  display: block;
+  color: #147458;
+  margin-top: 8px;
+  font-size: 17px;
+}
+.analogy-lesson dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid #e3eaf2;
+  padding: 7px 0;
+  font-size: 12px;
+}
+.analogy-lesson dd {
+  margin: 0;
+}
+.field-label,
+.vector-input legend,
+.input-section-heading h2 {
+  font-size: 15px;
+}
+.workspace,
+.ai-workspace {
+  grid-template-columns: 252px minmax(0, 1fr) 280px;
+  gap: 20px;
+  max-width: 1660px;
+  padding: 0 32px;
+}
+.page-intro,
+.page-footer {
+  max-width: 1660px;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+.results-grid {
+  display: block;
+}
+.instructions-panel {
+  align-self: start;
+  position: sticky;
+  top: 20px;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.instructions-title {
+  padding: 22px 20px 18px;
+  background: #f8fafd;
+  border-bottom: 1px solid #e5ebf3;
+}
+.instructions-title h2 {
+  font-family: Manrope, sans-serif;
+  font-size: 21px;
+  letter-spacing: -0.5px;
+  margin: 9px 0;
+  color: #234666;
+}
+.instructions-title > p {
+  font-size: 12px;
+  color: #50667f;
+  line-height: 1.8;
+  margin: 0;
+}
+.instructions-panel .steps-card {
+  border: 0;
+  border-radius: 0;
+  padding: 19px 18px;
+}
+.instructions-panel .steps-heading {
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.instructions-panel .steps-list li button {
+  font-size: 13px;
+  line-height: 1.85;
+  gap: 9px;
+  padding: 5px 0;
+}
+.instructions-panel .steps-list {
+  gap: 9px;
+}
+.instructions-panel .step-footer {
+  font-size: 9px;
+}
+.instruction-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 17px;
+}
+.instruction-list li {
+  display: flex;
+  gap: 9px;
+  font-size: 13px;
+  color: #4a627c;
+  line-height: 1.85;
+}
+.instruction-list .step-number {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.instructions-tips {
+  padding: 18px 20px;
+  border-top: 1px solid #e5ebf3;
+  background: #f8fafd;
+}
+.instructions-tips h3 {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 12px;
+  color: #385a7c;
+  margin: 0 0 9px;
+}
+.instructions-tips p {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #50667f;
+}
+.instructions-tips p:last-child {
+  border-top: 1px solid #e1e8f1;
+  padding-top: 11px;
+  margin-bottom: 0;
+}
+.instructions-tips strong {
+  font-weight: 600;
+  color: #2f506f;
+}
+@media (min-width: 901px) {
+  .control-panel {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .ai-workspace .control-panel {
+    overflow-y: auto;
+  }
+  .instructions-panel {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .ai-workspace .experiment-area {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+  }
+}
+@media (max-width: 1180px) and (min-width: 901px) {
+  .workspace,
+  .ai-workspace {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .instructions-panel {
+    grid-column: 2;
+    position: static;
+  }
+  .instructions-panel .steps-list li button {
+    font-size: 15px;
+  }
+}
+.select-wrapper select {
+  font-size: 14px;
+}
+.steps-list li button {
+  font-size: 15px;
+}
+.concept p {
+  font-size: 15px;
+}
+.concept h3 {
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
+  }
+  .control-panel {
+    width: 100%;
+  }
+  .experiment-area {
+    width: 100%;
+  }
+  .instructions-panel {
+    width: 100%;
+    position: static;
+  }
+  .instructions-panel .steps-list li button {
+    font-size: 15px;
+  }
+  .page-intro,
+  .page-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .mobile-controls-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: #f3f7fc;
+    color: #345775;
+    padding: 11px 12px;
+    margin-bottom: 18px;
+    border: 1px solid #dce6f1;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .mobile-controls-toggle > span:nth-of-type(2) {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 400;
+  }
+  .controls-collapsed .lab-controls-content {
+    display: none;
+  }
+  .controls-collapsed .mobile-controls-toggle {
+    margin-bottom: 0;
+  }
+  .ai-workspace .mobile-controls-toggle {
+    width: calc(100% - 32px);
+    margin: 16px;
+  }
+  .controls-collapsed .mobile-controls-toggle > svg:last-child {
+    transform: rotate(-90deg);
+  }
+  .vector-details dl {
+    grid-template-columns: 1fr 1fr;
+  }
+  .layer-bar {
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .layer-bar > span {
+    white-space: nowrap;
+    padding-top: 5px;
+  }
+}
+
+/* Keep teaching text readable even when the sidebars are narrow. */
+.page-intro p,
+.experiment-header p,
+.instructions-title > p,
+.instructions-panel .steps-list li button,
+.instruction-list li,
+.ai-panel .ai-helper,
+.ai-panel .ai-document-preview p,
+.ai-panel .ai-rag-result,
+.pca-panel p,
+.analogy-lesson p,
+.analogy-lesson li,
+.vector-details > p,
+.instructions-tips p {
+  font-size: 15px;
+  line-height: 1.75;
+}
+.ai-panel .ai-input-label {
+  font-size: 15px;
+}
+.ai-panel .ai-document-info strong {
+  font-size: 14px;
+}
+.ai-panel .ai-score {
+  font-size: 14px;
+}
+.ai-learning-path {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: -2px 0 15px;
+  color: #496580;
+  font-size: 11px;
+}
+.ai-learning-path > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-learning-path b {
+  display: grid;
+  place-items: center;
+  border: 1px solid #ceddec;
+  background: #f7faff;
+  color: #41658a;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+}
+.ai-learning-path svg {
+  color: #7d94ac;
+  margin-right: 3px;
+}
+.instructions-panel:focus-visible {
+  outline: 3px solid #458df5;
+  outline-offset: 3px;
+}

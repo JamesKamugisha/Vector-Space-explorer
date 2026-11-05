@@ -44,6 +44,10 @@
     sans-serif;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  max-width: calc(100% - 16px);
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 2px 8px #07101e25;
   will-change: transform;
 }
@@ -131,6 +135,21 @@
     system-ui,
     sans-serif;
   pointer-events: none;
+}
+.scene-subspace-note {
+  position: absolute;
+  left: 18px;
+  bottom: 42px;
+  max-width: calc(100% - 140px);
+  color: #91a6c3;
+  font:
+    400 10px/1.5 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  pointer-events: none;
+}
+.scene-subspace-note span {
+  display: block;
 }
 .scene-fallback {
   position: absolute;

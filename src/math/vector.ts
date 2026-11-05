@@ -37,8 +37,7 @@ export function normalize(u: Vec3): Vec3 | null {
 export function project(u: Vec3, v: Vec3): Vec3 | null {
   const q = normalize(v);
   if (!q || !finiteVector(u)) return null;
-  const p = scale(q, dot(u, q));
-  return finiteVector(p) ? p : null;
+  return projectOntoSpan(u, v, [0, 0, 0]);
 }
 
 /** The rank of two generators, independent of their absolute magnitudes. */
@@ -48,6 +47,33 @@ export function spanRank(u: Vec3, v: Vec3): 0 | 1 | 2 {
   if (!q1 && !q2) return 0;
   if (!q1 || !q2) return 1;
   return norm(cross(q1, q2)) > RELATIVE_TOLERANCE ? 2 : 1;
+}
+
+/** Orthonormal generators using the same scale-aware policy as spanRank. */
+export function orthonormalSpan(u: Vec3, v: Vec3): Vec3[] {
+  const uq = normalize(u),
+    vq = normalize(v);
+  if (!uq) return vq ? [vq] : [];
+  if (!vq) return [uq];
+  const normal = cross(uq, vq);
+  if (norm(normal) <= RELATIVE_TOLERANCE) return [uq];
+  const second = normalize(cross(normal, uq));
+  return second ? [uq, second] : [uq];
+}
+
+/** Closest vector in span{u,v}; the rank-zero subspace projects to the origin. */
+export function projectOntoSpan(x: Vec3, u: Vec3, v: Vec3): Vec3 | null {
+  if (!finiteVector(x) || !finiteVector(u) || !finiteVector(v)) return null;
+  const basis = orthonormalSpan(u, v);
+  const magnitude = Math.max(...x.map(Math.abs));
+  if (!basis.length || magnitude === 0) return [0, 0, 0];
+  const scaledX: Vec3 = [x[0] / magnitude, x[1] / magnitude, x[2] / magnitude];
+  const projection = basis.reduce<Vec3>(
+    (p, q) => add(p, scale(q, dot(scaledX, q))),
+    [0, 0, 0],
+  );
+  const result = scale(projection, magnitude);
+  return finiteVector(result) ? result : null;
 }
 
 /** Scaled partial pivoting; rejects a numerically singular basis. */

@@ -6,7 +6,9 @@ import {
   norm,
   normalize,
   nullspace,
+  orthonormalSpan,
   project,
+  projectOntoSpan,
   scale,
   solveBasis,
   spanRank,
@@ -22,6 +24,7 @@ export type Operation =
   | "span"
   | "independence"
   | "project"
+  | "planeProject"
   | "basis"
   | "dot"
   | "cross"
@@ -47,6 +50,11 @@ export type LessonResult = {
   secondary?: Vec3;
   rank?: number;
   nullBasis?: Vec3[];
+  domainExample?: string;
+  basisCoordinates?: Vec3;
+  scaledBasis?: [Vec3, Vec3, Vec3];
+  gramProjection?: Vec3;
+  gramResidual?: Vec3;
 };
 
 export const operationLabels: Record<Operation, string> = {
@@ -57,11 +65,38 @@ export const operationLabels: Record<Operation, string> = {
   span: "Span",
   independence: "Linear independence",
   project: "Orthogonal projection",
+  planeProject: "Projection onto a plane",
   basis: "Basis coordinates",
   dot: "Dot product & angle",
   cross: "Cross product",
   gramSchmidt: "Gram–Schmidt",
   nullspace: "Homogeneous systems",
+};
+
+export const domainExamples: Record<Operation, string> = {
+  add: "Navigation: combine a walking displacement and a moving walkway's displacement to find the total change in position.",
+  scale:
+    "Physics: doubling a force vector doubles its magnitude; multiplying by −1 reverses its direction.",
+  combination:
+    "Robotics: two independent actuator directions combine with adjustable weights to create a desired displacement.",
+  normalize:
+    "Computer graphics: normalize a lighting direction so its length does not accidentally change the brightness calculation.",
+  span: "Robotics: a robot constrained to two independent motion directions can reach a plane of displacements, but cannot leave it.",
+  independence:
+    "Sensor design: a new measurement direction adds information only when it is independent of the existing directions.",
+  project:
+    "Physics: project a force onto a track to find the component that acts along the track.",
+  planeProject:
+    "Surveying: project a measured 3D position onto a reference plane; the residual is its perpendicular offset from that plane.",
+  basis:
+    "Coordinate frames: express the same 3D displacement using a robot's local axes instead of the world axes.",
+  dot: "Search: the dot product of normalized document vectors measures directional alignment, which is cosine similarity.",
+  cross:
+    "Mechanics: torque is the cross product of the lever-arm vector and applied force, perpendicular to their plane.",
+  gramSchmidt:
+    "Computer graphics: construct perpendicular unit directions from independent inputs to form a stable camera coordinate frame.",
+  nullspace:
+    "Engineering: nullspace vectors describe changes to an unknown state that leave every linear measurement unchanged.",
 };
 export const defaultInputs: MathInputs = {
   u: [1, 2, 1],
@@ -95,7 +130,10 @@ export function calculateLesson(
   inputs: MathInputs,
 ): LessonResult {
   const { u, v, a, b, basis, target, matrix } = inputs;
-  const base = { title: operationLabels[operation] };
+  const base = {
+    title: operationLabels[operation],
+    domainExample: domainExamples[operation],
+  };
   const invalid = (warning: string): LessonResult => ({
     ...base,
     equation: "Check your inputs",
@@ -152,7 +190,7 @@ export function calculateLesson(
         `The solution set is ${shape}.`,
       ],
       concept:
-        "Homogeneous solution sets are vector subspaces: they contain zero and are closed under addition and scaling.",
+        "Homogeneous solution sets are vector subspaces: they contain zero and are closed under addition and scaling. In contrast, x − y = 1 excludes the origin and defines an affine set, not a vector subspace.",
     };
   }
   if (operation === "basis") {
@@ -165,9 +203,12 @@ export function calculateLesson(
       return invalid(
         "These vectors do not form a numerically independent basis. Choose three independent vectors.",
       );
+    const scaledBasis = basis.map((vector, index) =>
+      scale(vector, coordinates[index]),
+    ) as [Vec3, Vec3, Vec3];
     const reconstruction = add(
-      add(scale(basis[0], coordinates[0]), scale(basis[1], coordinates[1])),
-      scale(basis[2], coordinates[2]),
+      add(scaledBasis[0], scaledBasis[1]),
+      scaledBasis[2],
     );
     const unitBasis = basis.map(normalize) as [Vec3, Vec3, Vec3];
     const volume = Math.abs(
@@ -178,11 +219,14 @@ export function calculateLesson(
       equation: "Bc = x",
       value: `c = ${f(coordinates)}`,
       result: reconstruction,
+      basisCoordinates: coordinates,
+      scaledBasis,
       steps: [
         `Place the basis vectors in the columns of B: ${basis.map(f).join(", ")}.`,
         `Solve Bc = ${f(target)} for the three coefficients.`,
         `The coordinates in this basis are c = ${f(coordinates)}.`,
-        `Reconstruct: ${n(coordinates[0])}b₁ + ${n(coordinates[1])}b₂ + ${n(coordinates[2])}b₃ = ${f(reconstruction)}.`,
+        `Scale each basis direction: ${n(coordinates[0])}b₁ = ${f(scaledBasis[0])}, ${n(coordinates[1])}b₂ = ${f(scaledBasis[1])}, ${n(coordinates[2])}b₃ = ${f(scaledBasis[2])}.`,
+        `Add head to tail: ${f(scaledBasis[0])} + ${f(scaledBasis[1])} + ${f(scaledBasis[2])} = ${f(reconstruction)}.`,
       ],
       concept:
         "Coordinates depend on the chosen basis. The geometric vector stays the same while its coefficients change.",
@@ -350,6 +394,48 @@ export function calculateLesson(
       secondary: residual,
     };
   }
+  if (operation === "planeProject") {
+    if (!finiteVector(target))
+      return invalid("Enter finite coordinates for the target x.");
+    const p = projectOntoSpan(target, u, v);
+    if (!p)
+      return invalid(
+        "The projected result exceeds the supported numeric range. Use smaller coordinates.",
+      );
+    const residual = sub(target, p);
+    const q = orthonormalSpan(u, v);
+    const rank = q.length;
+    const shape = rank === 2 ? "plane" : rank === 1 ? "line" : "origin";
+    return {
+      ...vectorResult(
+        p,
+        "proj_span{u,v}(x) = QQᵀx",
+        [
+          `The generators span a ${shape}; the numerical dimension is ${rank}.`,
+          rank
+            ? `Build orthonormal directions Q: ${q.map(f).join("; ")}.`
+            : "Both generators are zero, so their span is {0}.",
+          rank
+            ? `Keep the component of x = ${f(target)} along each direction, then add: p = ${f(p)}.`
+            : "The closest point in {0} is the origin: p = (0, 0, 0).",
+          `Subtract to get the residual x − p = ${f(residual)}.`,
+          rank === 2
+            ? "The residual is normal to the plane; p is its closest point to x."
+            : rank === 1
+              ? "The residual is perpendicular to the remaining line; p is its closest point to x."
+              : "The whole target vector is the residual because the subspace contains only zero.",
+        ],
+        "Orthogonal projection onto a subspace minimizes Euclidean distance. A plane needs two independent generators; dependent inputs correctly reduce to a line or the origin.",
+      ),
+      secondary: residual,
+      rank,
+      ...(rank < 2
+        ? {
+            warning: `The generators do not define a plane. Projection is onto their actual span: the ${shape}.`,
+          }
+        : {}),
+    };
+  }
   if (operation === "dot") {
     const product = dot(u, v),
       uq = normalize(u),
@@ -420,16 +506,25 @@ export function calculateLesson(
     return invalid(
       "The vectors are too nearly dependent to resolve a second direction.",
     );
+  const gramProjection = project(v, u);
+  if (!gramProjection)
+    return invalid(
+      "The projection exceeds the supported numeric range. Use smaller coordinates.",
+    );
+  const gramResidual = sub(v, gramProjection);
   return {
     ...base,
     equation: "q₁ = u / ‖u‖, q₂ = (v − projᵤv) / ‖v − projᵤv‖",
     value: `q₁ = ${f(q1)} · q₂ = ${f(q2)}`,
     result: q1,
     secondary: q2,
+    gramProjection,
+    gramResidual,
     rank: 2,
     steps: [
       `Normalize the first vector: q₁ = ${f(q1)}.`,
-      "Subtract from v its projection onto q₁.",
+      `Project v onto q₁: (v · q₁)q₁ = ${f(gramProjection)}.`,
+      `Subtract that projection from v: w = ${f(gramResidual)}.`,
       `Normalize that residual to get q₂ = ${f(q2)}.`,
       `Both lengths are 1, and q₁ · q₂ ≈ ${n(dot(q1, q2))}.`,
     ],

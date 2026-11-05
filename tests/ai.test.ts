@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   corpus,
+  buildCorpus,
+  clampPointCount,
   cosineSimilarity,
   encodeQuery,
   euclideanDistance,
@@ -9,6 +11,175 @@ import {
   retrieveContext,
   tokenize,
 } from "../src/ai/model";
+import {
+  cosineNd,
+  distanceNd,
+  fitPca,
+  getPcaView,
+  pcaDataset,
+  pcaModel,
+  projectPca,
+} from "../src/ai/pca";
+
+describe("expanded synthetic teaching corpus", () => {
+  it("keeps the original eight and generates repeatable, unique finite points", () => {
+    expect(buildCorpus(8)).toEqual(corpus);
+    const documents = buildCorpus(500);
+    expect(documents).toHaveLength(500);
+    expect(new Set(documents.map((document) => document.id)).size).toBe(500);
+    expect(
+      documents.every((document) => document.vector.every(Number.isFinite)),
+    ).toBe(true);
+    expect(
+      documents
+        .slice(8)
+        .every((document) =>
+          document.text.startsWith("Synthetic teaching example"),
+        ),
+    ).toBe(true);
+    expect(buildCorpus(50)).toEqual(documents.slice(0, 50));
+    expect(buildCorpus(500)).toEqual(documents);
+    documents[0].vector[0] = 900;
+    expect(corpus[0].vector[0]).toBe(4);
+  });
+  it("validates and bounds the requested count", () => {
+    expect(clampPointCount(1)).toBe(8);
+    expect(clampPointCount(50.9)).toBe(50);
+    expect(clampPointCount(900)).toBe(500);
+    expect(clampPointCount(NaN)).toBe(8);
+    expect(buildCorpus(-10)).toHaveLength(8);
+    expect(buildCorpus(5000)).toHaveLength(500);
+  });
+  it("ranks and retrieves from the exact 500-document array supplied", () => {
+    const documents = buildCorpus(500);
+    const query = encodeQuery("remote access");
+    for (const metric of ["cosine", "euclidean"] as const) {
+      const ranking = rankDocuments(query, metric, documents);
+      expect(ranking).toHaveLength(500);
+      expect(ranking).toEqual(rankDocuments(query, metric, documents));
+      for (const row of ranking) {
+        expect(documents).toContain(row.document);
+        expect(row.score).toBe(
+          metric === "cosine"
+            ? cosineSimilarity(query, row.document.vector)
+            : euclideanDistance(query, row.document.vector),
+        );
+      }
+      expect(retrieveContext(query, metric, 2, documents)[0]).toBe(
+        ranking[0].document,
+      );
+      expect(retrieveContext([0, 0, 0], metric, 2, documents)).toEqual([]);
+    }
+  });
+});
+
+describe("computed PCA", () => {
+  it("finds known principal axes and sample eigenvalues", () => {
+    const data = [
+      [4, 0, 0, 0],
+      [-4, 0, 0, 0],
+      [0, 3, 0, 0],
+      [0, -3, 0, 0],
+      [0, 0, 2, 0],
+      [0, 0, -2, 0],
+      [0, 0, 0, 1],
+      [0, 0, 0, -1],
+    ];
+    const model = fitPca(data);
+    expect(model.mean).toEqual([0, 0, 0, 0]);
+    expect(model.components).toEqual([
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+    ]);
+    expect(model.eigenvalues[0]).toBeCloseTo(32 / 7);
+    expect(model.eigenvalues[1]).toBeCloseTo(18 / 7);
+    expect(model.eigenvalues[2]).toBeCloseTo(8 / 7);
+    expect(model.explainedVariance.reduce((a, b) => a + b, 0)).toBeCloseTo(
+      58 / 60,
+    );
+    expect(projectPca([1, 2, 3, 4], model)).toEqual([1, 2, 3]);
+  });
+  it("fits orthonormal eigenvectors satisfying the covariance equation", () => {
+    const data = pcaDataset.map((point) => point.vector);
+    const centered = data.map((row) => row.map((v, i) => v - pcaModel.mean[i]));
+    const covariance = pcaModel.mean.map((_, i) =>
+      pcaModel.mean.map((__, j) =>
+        centered.reduce(
+          (sum, row) => sum + (row[i] * row[j]) / (data.length - 1),
+          0,
+        ),
+      ),
+    );
+    pcaModel.components.forEach((component, index) => {
+      expect(Math.hypot(...component)).toBeCloseTo(1, 10);
+      pcaModel.components.forEach((other, j) =>
+        expect(
+          component.reduce((sum, value, i) => sum + value * other[i], 0),
+        ).toBeCloseTo(Number(index === j), 10),
+      );
+      covariance.forEach((row, axis) =>
+        expect(
+          row.reduce((sum, value, i) => sum + value * component[i], 0),
+        ).toBeCloseTo(pcaModel.eigenvalues[index] * component[axis], 9),
+      );
+    });
+  });
+  it("centers data consistently and handles constant/invalid datasets", () => {
+    const data = [
+      [1, 2, 3, 4],
+      [3, 1, 5, 2],
+      [-1, 4, 2, 1],
+      [0, 0, 0, 0],
+    ];
+    const model = fitPca(data);
+    const shifted = data.map((row) => row.map((value) => value + 100));
+    const shiftedModel = fitPca(shifted);
+    data.forEach((row, index) =>
+      projectPca(row, model).forEach((value, axis) =>
+        expect(value).toBeCloseTo(
+          projectPca(shifted[index], shiftedModel)[axis],
+          9,
+        ),
+      ),
+    );
+    const constant = fitPca([
+      [2, 2, 2, 2],
+      [2, 2, 2, 2],
+    ]);
+    expect(projectPca([2, 2, 2, 2], constant)).toEqual([0, 0, 0]);
+    expect(constant.explainedVariance).toEqual([0, 0, 0]);
+    expect(() => fitPca([[1, 2]])).toThrow();
+    expect(() => fitPca([[1, 2], [1]])).toThrow();
+    expect(() =>
+      fitPca([
+        [1, 2],
+        [NaN, 2],
+      ]),
+    ).toThrow();
+    expect(() => projectPca([1], model)).toThrow();
+  });
+  it("keeps retrieval scores in full dimension and demonstrates discarded information", () => {
+    const view = getPcaView("hidden");
+    const g = view.rows.find((row) => row.id === "pca-g")!;
+    const h = view.rows.find((row) => row.id === "pca-h")!;
+    g.position.forEach((value, axis) =>
+      expect(value).toBeCloseTo(h.position[axis], 10),
+    );
+    expect(g.originalCosine).not.toBeCloseTo(h.originalCosine!);
+    expect(g.projectedCosine).toBeCloseTo(h.projectedCosine!);
+    for (const row of view.rows) {
+      expect(row.originalCosine).toBe(cosineNd(view.queryOriginal, row.vector));
+      expect(row.originalDistance).toBe(
+        distanceNd(view.queryOriginal, row.vector),
+      );
+      expect(row.projectedDistance).toBeLessThanOrEqual(
+        row.originalDistance + 1e-10,
+      );
+    }
+    expect(getPcaView("missing")).toEqual(view);
+  });
+});
 
 describe("teaching query encoder", () => {
   it("uses inspectable whole-token features and ignores unknown terms", () => {

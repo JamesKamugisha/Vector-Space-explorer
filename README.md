@@ -22,12 +22,13 @@ npm run preview
 
 ## Features
 
-- Twelve math lessons: addition, scalar multiplication, linear combination, norm/normalization, span, independence, orthogonal projection, basis coordinates, dot/angle, cross product, Gram–Schmidt, and homogeneous systems.
+- Thirteen math lessons: addition, scalar multiplication, linear combination, norm/normalization, span, independence, line and plane projection, basis coordinates, dot/angle, cross product, Gram–Schmidt, and homogeneous systems.
 - Editable Cartesian vectors, basis and matrix inputs, worked steps, cancellable playback, manual stepping, and presets.
-- Orbit, zoom, pan, camera reset, full-screen workspace, axes, orientation gizmo, grid, upright labels, hover readouts, and optional unit sphere.
+- Orbit, zoom, pan, camera reset, full-screen workspace, axes, orientation gizmo, grid, upright labels, hover readouts, optional unit sphere, magnitude shells, and XZ/YZ reference planes.
 - Rank-dependent line/plane/origin geometry, projection residuals, and nullspace visualization.
-- AI lab with eight local documents, documented keyword features, actual cosine/Euclidean scores, normalized display, count matrix, and source-based RAG simulation.
-- Responsive layout, keyboard controls, focus-visible states, reduced-motion playback, and WebGL fallback.
+- AI lab with an 8–500 point setter, quick presets and +25 control; deterministic synthetic expansion, computed cosine/Euclidean scores, normalized display, actual count-vector plotting, a count matrix, and source-based RAG simulation.
+- Computed synthetic 4D-to-3D PCA with original-space versus projected scores, explained variance, and a deliberately constructed vector analogy experiment.
+- Contextual right-hand instructions sidebar, collapsible mobile controls, keyboard vector inspection, focus-visible states, reduced-motion playback, and WebGL fallback.
 
 ## Mathematical and teaching conventions
 
@@ -35,9 +36,9 @@ Cartesian coordinates map directly to world XYZ with Z up. R³ is unbounded; the
 
 Rank decisions use a documented relative tolerance in `src/math/vector.ts`; nearly dependent inputs can produce a warning. Basis vectors are matrix columns. Homogeneous systems accept three-column matrices and visualize nullity zero through three.
 
-AI coordinates are handcrafted teaching examples, not model embeddings. Query tokens are mapped into three disclosed feature counts; unsupported queries are not ranked. Normalizing the plot changes positions only: ranking continues to use original vectors. The count matrix is a separate representation of corpus text, explicitly distinguished from handcrafted coordinates. RAG answers extract retrieved source sentences without calling a language model.
+AI coordinates are handcrafted teaching examples, not model embeddings. Query tokens are mapped into three disclosed feature counts; unsupported queries are not ranked. Normalizing the plot changes positions only: ranking continues to use original vectors. The count matrix is a separate representation of corpus text; Count vectors mode plots those actual counts instead of the handcrafted coordinates. RAG answers extract retrieved source sentences without calling a language model.
 
-Playback animates addition, scaling, normalization, and linear-combination geometry. Other lessons support highlighted worked steps with their computed geometry. PCA and real embedding integration are deferred.
+Playback animates addition, scaling, normalization, linear combinations, basis reconstruction, and Gram–Schmidt subtraction/normalization. Other lessons support highlighted worked steps with their computed geometry. The PCA lesson fits principal components to eight synthetic 4D points and keeps original-dimensional scores separate from projected values. Real trained embedding integration and live model generation remain optional follow-ups.
 
 ## Verification
 

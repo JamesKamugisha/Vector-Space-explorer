@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   corpus,
+  clampPointCount,
+  cosineSimilarity,
   encodeQuery,
   extractAnswer,
+  euclideanDistance,
   featureColors,
   featureNames,
   featureTerms,
@@ -11,6 +14,7 @@ import {
   retrieveContext,
   vectorText,
   type AiMetric,
+  type AiDocument,
 } from "./model";
 import "./ai.css";
 
@@ -23,6 +27,11 @@ export type AiPanelProps = {
   onSelect: (id: string) => void;
   normalized: boolean;
   onNormalizedChange: (value: boolean) => void;
+  pointCount?: number;
+  onPointCountChange?: (value: number) => void;
+  documents?: AiDocument[];
+  representation?: "teaching" | "counts";
+  onRepresentationChange?: (mode: "teaching" | "counts") => void;
 };
 
 export default function AiPanel({
@@ -34,28 +43,44 @@ export default function AiPanel({
   onSelect,
   normalized,
   onNormalizedChange,
+  pointCount = corpus.length,
+  onPointCountChange,
+  documents = corpus,
+  representation = "teaching",
+  onRepresentationChange,
 }: AiPanelProps) {
   const [showAll, setShowAll] = useState(false);
   const [stage, setStage] = useState(0);
   const [showMatrix, setShowMatrix] = useState(false);
+  const [countText, setCountText] = useState(String(pointCount));
+  useEffect(() => setCountText(String(pointCount)), [pointCount]);
   const vector = useMemo(() => encodeQuery(query), [query]);
   const ranking = useMemo(
-    () => rankDocuments(vector, metric),
-    [vector, metric],
+    () => rankDocuments(vector, metric, documents),
+    [vector, metric, documents],
   );
   const valid = vector.some((value) => value !== 0);
   const selected =
-    corpus.find((document) => document.id === selectedId) ??
+    documents.find((document) => document.id === selectedId) ??
     (valid ? ranking[0]?.document : undefined);
   const retrieved = useMemo(
-    () => retrieveContext(vector, metric),
-    [vector, metric],
+    () => retrieveContext(vector, metric, 2, documents),
+    [vector, metric, documents],
   );
   const answer = useMemo(() => extractAnswer(retrieved), [retrieved]);
+  const selectedCosine = selected
+    ? cosineSimilarity(vector, selected.vector)
+    : null;
+  const selectedAngle =
+    selectedCosine === null
+      ? null
+      : (Math.acos(selectedCosine) * 180) / Math.PI;
+  const selectedDistance =
+    valid && selected ? euclideanDistance(vector, selected.vector) : null;
   // A new search focuses its best result; clicking a document afterwards remains manual.
   useEffect(() => {
     setStage(0);
-    onSelect(valid ? ranking[0].document.id : "");
+    onSelect(valid ? (ranking[0]?.document.id ?? "") : "");
   }, [ranking, valid, onSelect]);
 
   return (
@@ -170,10 +195,77 @@ export default function AiPanel({
         )}
       </div>
 
+      {onPointCountChange && (
+        <div className="ai-section ai-count-section">
+          <div className="ai-section-heading">
+            <label htmlFor="ai-point-count" className="ai-eyebrow">
+              NUMBER OF POINTS
+            </label>
+            <span className="ai-count">8–500</span>
+          </div>
+          <div className="ai-point-count-row">
+            <input
+              id="ai-point-count"
+              type="number"
+              min={8}
+              max={500}
+              step={1}
+              value={countText}
+              onChange={(event) => {
+                const text = event.target.value;
+                setCountText(text);
+                const count = Number(text);
+                if (
+                  text !== "" &&
+                  Number.isFinite(count) &&
+                  count >= 8 &&
+                  count <= 500
+                )
+                  onPointCountChange(Math.floor(count));
+              }}
+              onBlur={() => {
+                const count = clampPointCount(Number(countText));
+                setCountText(String(count));
+                onPointCountChange(count);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+              }}
+            />
+            <button
+              type="button"
+              disabled={pointCount >= 500}
+              onClick={() =>
+                onPointCountChange(clampPointCount(pointCount + 25))
+              }
+            >
+              +25 points
+            </button>
+          </div>
+          <div className="ai-count-presets" aria-label="Point count presets">
+            {[8, 50, 100, 500].map((count) => (
+              <button
+                type="button"
+                key={count}
+                aria-pressed={pointCount === count}
+                onClick={() => onPointCountChange(count)}
+              >
+                {count}
+              </button>
+            ))}
+          </div>
+          <p className="ai-helper">
+            {documents.length > 8
+              ? `8 original examples + ${documents.length - 8} deterministic synthetic points. Added snippets are labeled synthetic.`
+              : "Eight original teaching documents. Add synthetic points to explore a larger cloud."}
+          </p>
+        </div>
+      )}
+
       <div className="ai-section ai-ranking-section">
         <div className="ai-section-heading">
           <span className="ai-eyebrow">03 / SEARCH RESULTS</span>
-          <span className="ai-count">{corpus.length} in corpus</span>
+          <span className="ai-count">{documents.length} in corpus</span>
         </div>
         <div className="ai-ranked-list" aria-label="Ranked search results">
           {valid ? (
@@ -216,7 +308,9 @@ export default function AiPanel({
             type="button"
             onClick={() => setShowAll((value) => !value)}
           >
-            {showAll ? "Show top four" : `View all ${corpus.length} documents`}{" "}
+            {showAll
+              ? "Show top four"
+              : `View all ${documents.length} documents`}{" "}
             <span aria-hidden="true">{showAll ? "↑" : "↓"}</span>
           </button>
         )}
@@ -233,7 +327,38 @@ export default function AiPanel({
             </div>
             <p>{selected.text}</p>
             <code>{vectorText(selected.vector)}</code>
-            <span className="ai-preview-tag">Teaching vector</span>
+            <span className="ai-preview-tag">
+              {representation === "counts" ? "Count vector" : "Teaching vector"}
+            </span>
+            <dl className="ai-selected-metrics">
+              <div>
+                <dt>Cosine</dt>
+                <dd>
+                  {selectedCosine === null
+                    ? "Undefined"
+                    : selectedCosine.toFixed(4)}
+                </dd>
+              </div>
+              <div>
+                <dt>Angle</dt>
+                <dd>
+                  {selectedAngle === null
+                    ? "Undefined"
+                    : `${selectedAngle.toFixed(2)}°`}
+                </dd>
+              </div>
+              <div>
+                <dt>Distance</dt>
+                <dd>
+                  {selectedDistance === null
+                    ? "Undefined"
+                    : selectedDistance.toFixed(4)}
+                </dd>
+              </div>
+            </dl>
+            <p className="ai-helper">
+              Query ↔ selected document, computed from original 3D vectors.
+            </p>
           </article>
         )}
       </div>
@@ -313,9 +438,9 @@ export default function AiPanel({
           How these teaching vectors work <span aria-hidden="true">+</span>
         </summary>
         <p className="ai-helper">
-          These handcrafted 3D coordinates illustrate retrieval. They are not
-          real LLM embeddings, and this keyword model does not understand
-          language.
+          {representation === "counts"
+            ? "The scene now plots document keyword counts: X is access, Y is workplace policy, and Z is food. These count vectors are a traditional representation, not LLM embeddings."
+            : "These handcrafted 3D coordinates illustrate retrieval. They are not real LLM embeddings, and this keyword model does not understand language."}
         </p>
         <div className="ai-feature-list">
           {featureNames.map((name, index) => (
@@ -345,10 +470,28 @@ export default function AiPanel({
         {showMatrix && (
           <div className="ai-matrix-wrap">
             <p className="ai-helper">
-              Counts below come from the same keyword rules applied to document
-              titles and text. They are a separate count representation, not the
-              plotted handcrafted coordinates.
+              Counts below use the keyword rules on each document title and
+              text.{" "}
+              {representation === "counts"
+                ? "The scene and rankings use these exact count vectors. Select a row to highlight its plotted point."
+                : "Choose Plot count vectors to use these coordinates for the scene and ranking."}
             </p>
+            {onRepresentationChange && (
+              <button
+                type="button"
+                className="ai-matrix-button"
+                onClick={() =>
+                  onRepresentationChange(
+                    representation === "counts" ? "teaching" : "counts",
+                  )
+                }
+              >
+                {representation === "counts"
+                  ? "Return to teaching vectors"
+                  : "Plot count vectors"}{" "}
+                <span aria-hidden="true">→</span>
+              </button>
+            )}
             <table className="ai-matrix">
               <caption>Feature counts in each document</caption>
               <thead>
@@ -366,7 +509,7 @@ export default function AiPanel({
                 </tr>
               </thead>
               <tbody>
-                {corpus.map((document) => (
+                {documents.map((document) => (
                   <tr
                     key={document.id}
                     className={selected?.id === document.id ? "selected" : ""}

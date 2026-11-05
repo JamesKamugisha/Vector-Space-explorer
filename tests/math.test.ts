@@ -6,7 +6,9 @@ import {
   norm,
   normalize,
   nullspace,
+  orthonormalSpan,
   project,
+  projectOntoSpan,
   scale,
   solveBasis,
   spanRank,
@@ -216,12 +218,72 @@ describe("homogeneous systems", () => {
   });
 });
 
+describe("orthogonal projection onto a subspace", () => {
+  it("projects onto a non-axis-aligned plane with a normal residual", () => {
+    const u: Vec3 = [1, -1, 0],
+      v: Vec3 = [1, 1, -2],
+      x: Vec3 = [3, 2, 1];
+    const p = projectOntoSpan(x, u, v)!;
+    closeVector(p, [1, 0, -1]);
+    const residual: Vec3 = [x[0] - p[0], x[1] - p[1], x[2] - p[2]];
+    expect(dot(residual, u)).toBeCloseTo(0, 10);
+    expect(dot(residual, v)).toBeCloseTo(0, 10);
+    closeVector(projectOntoSpan(p, u, v), p);
+    expect(dot(cross(u, v), p)).toBeCloseTo(0, 10);
+  });
+  it("collapses to a line or origin, including a zero first generator", () => {
+    closeVector(projectOntoSpan([3, 1, 4], [1, 1, 0], [-2, -2, 0]), [2, 2, 0]);
+    closeVector(projectOntoSpan([3, 1, 4], [0, 0, 0], [2, 2, 0]), [2, 2, 0]);
+    closeVector(projectOntoSpan([3, 1, 4], [0, 0, 0], [0, 0, 0]), [0, 0, 0]);
+    closeVector(projectOntoSpan([0, 0, 0], [1, 0, 0], [0, 1, 0]), [0, 0, 0]);
+    expect(projectOntoSpan([NaN, 0, 0], [1, 0, 0], [0, 1, 0])).toBeNull();
+    expect(projectOntoSpan([1, 0, 0], [Infinity, 0, 0], [0, 1, 0])).toBeNull();
+  });
+  it("keeps orthonormal directions across scales and near dependence", () => {
+    const u: Vec3 = [1e-200, 2e-200, 3e-200];
+    const v: Vec3 = [1e200 + 1e192, 2e200, 3e200];
+    const q = orthonormalSpan(u, v);
+    expect(q).toHaveLength(2);
+    q.forEach((vector) => expect(norm(vector)).toBeCloseTo(1, 12));
+    expect(dot(q[0], q[1])).toBeCloseTo(0, 12);
+    expect(orthonormalSpan([1, 0, 0], [1, 1e-12, 0])).toHaveLength(1);
+  });
+  it("matches the closest-point distance along the plane", () => {
+    const u: Vec3 = [2, 1, -1],
+      v: Vec3 = [1, -2, 3],
+      x: Vec3 = [4, 5, -2];
+    const p = projectOntoSpan(x, u, v)!;
+    const residual: Vec3 = [x[0] - p[0], x[1] - p[1], x[2] - p[2]];
+    for (const [a, b] of [
+      [1, 0],
+      [0, -1],
+      [2, 3],
+      [-4, 1],
+    ]) {
+      const other = add(p, add(scale(u, a), scale(v, b)));
+      const distance = Math.hypot(
+        x[0] - other[0],
+        x[1] - other[1],
+        x[2] - other[2],
+      );
+      expect(distance).toBeGreaterThanOrEqual(norm(residual));
+    }
+  });
+});
+
 describe("lesson derivation", () => {
   it("derives correct results for the source fixtures", () => {
     closeVector(calculateLesson("add", defaultInputs).result!, [3, 1, 2]);
     closeVector(calculateLesson("basis", defaultInputs).result!, [3, 2, 4]);
     expect(calculateLesson("nullspace", defaultInputs).nullBasis).toEqual([
       [1, 1, 1],
+    ]);
+    const basis = calculateLesson("basis", defaultInputs);
+    closeVector(basis.basisCoordinates!, [1, 2, 4]);
+    expect(basis.scaledBasis).toEqual([
+      [1, 0, 0],
+      [2, 2, 0],
+      [0, 0, 4],
     ]);
   });
   it("returns explicit errors rather than nonfinite geometry", () => {
@@ -243,6 +305,8 @@ describe("lesson derivation", () => {
     expect(dot(result.result!, result.secondary!)).toBeCloseTo(0, 10);
     expect(result.result![2]).toBe(0);
     expect(result.secondary![2]).toBe(0);
+    closeVector(result.gramProjection!, [0.5, 0.5, 0]);
+    closeVector(result.gramResidual!, [0.5, -0.5, 0]);
     expect(
       calculateLesson("gramSchmidt", { ...inputs, v: [2, 2, 0] }).warning,
     ).toBeTruthy();
@@ -293,6 +357,27 @@ describe("lesson derivation", () => {
         .value,
     ).toContain("θ = 90°");
   });
+  it("derives plane projection steps and explains rank collapse", () => {
+    const inputs: MathInputs = {
+      ...defaultInputs,
+      u: [1, -1, 0],
+      v: [1, 1, -2],
+      target: [3, 2, 1],
+    };
+    const result = calculateLesson("planeProject", inputs);
+    closeVector(result.result!, [1, 0, -1]);
+    closeVector(result.secondary!, [2, 2, 2]);
+    expect(result.rank).toBe(2);
+    expect(result.warning).toBeUndefined();
+    const zero = calculateLesson("planeProject", {
+      ...inputs,
+      u: [0, 0, 0],
+      v: [0, 0, 0],
+    });
+    closeVector(zero.result!, [0, 0, 0]);
+    closeVector(zero.secondary!, inputs.target);
+    expect(zero.warning).toContain("origin");
+  });
   it("every registered operation yields an explanation and steps", () => {
     const operations: Operation[] = [
       "add",
@@ -302,6 +387,7 @@ describe("lesson derivation", () => {
       "span",
       "independence",
       "project",
+      "planeProject",
       "basis",
       "dot",
       "cross",
@@ -312,6 +398,7 @@ describe("lesson derivation", () => {
       const result = calculateLesson(op, defaultInputs);
       expect(result.steps.length).toBeGreaterThan(1);
       expect(result.concept.length).toBeGreaterThan(10);
+      expect(result.domainExample!.length).toBeGreaterThan(30);
       expect(result.value).not.toContain("NaN");
     }
   });

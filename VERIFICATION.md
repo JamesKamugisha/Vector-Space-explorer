@@ -6,8 +6,8 @@ Verified November 5, 2026, on Windows with Node.js 24, npm 11, and installed Goo
 
 - Production build and strict TypeScript check.
 - ESLint, Prettier formatting check, and production dependency audit (zero vulnerabilities reported).
-- 28 numerical and AI unit tests: vector identities, magnitude-independent rank, basis reconstruction and singular handling, Gram–Schmidt orthonormality, nullspace equations, angles, metric ordering, unknown queries, and RAG provenance.
-- 12 browser tests: automated accessibility for Math and AI, all math lessons, live inputs, overlays, source fixtures, playback cancellation, manual steps, AI metric switching and RAG, scenario lifecycle, mobile overflow/help, reduced motion/WebGL fallback, camera orbit/reset, resource stability, and mobile canvas sizing.
+- 40 numerical and AI unit tests: vector identities, magnitude-independent rank, basis reconstruction and singular handling, Gram–Schmidt orthonormality, nullspace equations, angles, metric ordering, unknown queries, and RAG provenance.
+- 28 browser tests: automated accessibility for Math and AI, all math lessons, live inputs, overlays, source fixtures, playback cancellation, manual steps, AI metric switching and RAG, scenario lifecycle, mobile overflow/help, reduced motion/WebGL fallback, camera orbit/reset, resource stability, mobile canvas sizing, 8–500 point controls, actual count-vector ranking, PCA values, expanded accessibility, mobile collapse, right instructions, raycast selection, norm shells/reference planes, basis/Gram geometry phases, point-buffer reuse, and dense-label collision handling.
 - Desktop and 390px mobile screenshots reviewed; text contrast improved, input/results typography increased, duplicate scene UI removed, and hidden skip-link positioning corrected.
 
 ## Defects caught during implementation
@@ -21,7 +21,7 @@ Verified November 5, 2026, on Windows with Node.js 24, npm 11, and installed Goo
 
 ## Observed scene behavior
 
-At a 1440×1100 automated Chrome viewport, the resource test returned to 53 geometries and 0 textures after repeated lesson and scenario changes. The sampled frame rate across local runs was approximately 50–61 FPS. Orbit visibly changed the scene; reset restored the camera exactly, with approximately 0.184% screenshot pixel variation after settling. Numeric results stayed unchanged during camera movement.
+At a 1440×1100 automated Chrome viewport, the resource test returned to 53 geometries and 0 textures after repeated lesson and scenario changes. The sampled frame rate across local runs was approximately 50–61 FPS. Orbit visibly changed the scene; reset restored the camera exactly, with less than 0.5% screenshot pixel variation after settling. Numeric results stayed unchanged during camera movement.
 
 These measurements describe the local test environment. They do not establish performance on every device or prove that every possible WebGL resource leak is absent.
 
@@ -29,6 +29,12 @@ The separate seeded 500-point profile used automated Chrome 156 on this Windows 
 
 ## Scope and remaining checks
 
-The delivered demo includes 12 mathematical operations and the deterministic AI lab. Step highlighting works across lessons; animated geometry is implemented for addition, scaling, normalization, and linear combination. Projection onto a plane, PCA education, real embeddings, and live LLM generation are deferred. Broad physical-device testing remains. Automated accessibility checks supplement manual keyboard/mobile review and do not constitute a complete accessibility certification.
+The delivered app includes 13 mathematical operations, the configurable deterministic AI lab, a computed synthetic 4D PCA lesson, vector analogy arithmetic, and a contextual right instructions sidebar. Step highlighting works across lessons; actual geometry playback includes addition, scaling, normalization, linear combination, basis reconstruction, and Gram–Schmidt. Projection onto a plane and PCA education are implemented. Real trained embeddings and live LLM generation remain explicitly optional. Broad physical-device testing remains. Automated accessibility checks supplement manual keyboard/mobile review and do not constitute a complete accessibility certification.
 
-The app was deployed from GitHub to https://vector-space-explorer-lac.vercel.app/. The initial source commit passed remote Linux CI: https://github.com/JamesKamugisha/Vector-Space-explorer/actions/runs/42125685154. All 12 browser checks also passed against the live production URL, including accessibility, mathematical fixtures, AI retrieval, mobile layout, fallback behavior, camera reset, and resource stability.
+The app was deployed from GitHub to https://vector-space-explorer-lac.vercel.app/. The initial source commit passed remote Linux CI: https://github.com/JamesKamugisha/Vector-Space-explorer/actions/runs/42125685154. The initial 12 browser checks also passed against the live production URL, including accessibility, mathematical fixtures, AI retrieval, mobile layout, fallback behavior, camera reset, and resource stability.
+
+## Specification completion review
+
+The November 5 follow-up compared the original specification with the live baseline and source. It completed the missing magnitude shells, reference planes, clickable math-vector details, numeric spherical inspector, plane projection, basis/Gram geometry playback, mobile collapse, real-world lesson examples, actual count-vector plotting, selected AI angle/distance readouts, synthetic PCA, and optional contrived analogy. The user-requested point setter renders the selected number of actual scene points; generated documents are labeled synthetic, and rankings/retrieval use those same arrays. The requested right sidebar contains contextual instructions and the single worked-step player. Dense-cloud labels use clamped collision avoidance and selected-point priority.
+
+The local checklist is intentionally excluded from the public repository together with the original specification and plans. It distinguishes delivered version 1 workflows from optional live AI integrations and physical-device testing.
