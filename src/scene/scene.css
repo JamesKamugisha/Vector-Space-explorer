@@ -55,6 +55,16 @@
   border-color: var(--label-color);
   background: #172845;
 }
+.scene-cluster-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: #050d1cd9;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 5px 7px;
+}
 .scene-gizmo-label {
   position: absolute;
   top: 0;

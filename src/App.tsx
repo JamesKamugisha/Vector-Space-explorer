@@ -43,6 +43,8 @@ import AnalogyLesson, {
   analogyPoints,
   analogyResult,
 } from "./components/AnalogyLesson";
+import RealPanel from "./real/RealPanel";
+import { useRealEmbeddings } from "./real/useRealEmbeddings";
 
 type Scenario = "math" | "ai";
 const ZERO: Vec3 = [0, 0, 0];
@@ -317,8 +319,53 @@ export default function App() {
   const [normalized, setNormalized] = useState(false);
   const [pointCount, setPointCount] = useState(8);
   const [aiView, setAiView] = useState<
-    "teaching" | "counts" | "pca" | "analogy"
+    "teaching" | "counts" | "pca" | "analogy" | "real"
   >("teaching");
+  const [realHasOpened, setRealHasOpened] = useState(false);
+  const [realQuery, setRealQuery] = useState(
+    "How do birds use feathers to fly?",
+  );
+  const [realSelectedId, setRealSelectedId] = useState("");
+  const [showClusterConnections, setShowClusterConnections] = useState(true);
+  const isReal = scenario === "ai" && aiView === "real";
+  const real = useRealEmbeddings(pointCount, isReal);
+  const realScenePoints = useMemo(() => {
+    const scores = new Map(
+      real.state.results.map(({ document, score }) => [document.id, score]),
+    );
+    return real.state.points.map((point) => ({
+      ...point,
+      score: scores.get(point.id),
+    }));
+  }, [real.state.points, real.state.results]);
+  const realClusterLabels = useMemo(() => {
+    const documentsById = new Map(
+      real.state.documents.map((document) => [document.id, document]),
+    );
+    const groups = new Map<
+      string,
+      { position: Vec3; count: number; color: string }
+    >();
+    for (const point of real.state.points) {
+      const document = documentsById.get(point.id);
+      if (!document) continue;
+      const group = groups.get(document.topic) ?? {
+        position: [0, 0, 0] as Vec3,
+        count: 0,
+        color: document.color,
+      };
+      point.position.forEach((value, index) => {
+        group.position[index] += value;
+      });
+      group.count++;
+      groups.set(document.topic, group);
+    }
+    return Array.from(groups, ([label, group]) => ({
+      label,
+      position: group.position.map((value) => value / group.count) as Vec3,
+      color: group.color,
+    }));
+  }, [real.state.documents, real.state.points]);
   const [analogyReverse, setAnalogyReverse] = useState(false);
   const [analogySelectedId, setAnalogySelectedId] = useState("");
   const [pcaQueryId, setPcaQueryId] = useState("hidden");
@@ -590,7 +637,7 @@ export default function App() {
 
       <main
         id="workspace"
-        className={`workspace ${scenario === "ai" ? "ai-workspace" : ""}`}
+        className={`workspace ${scenario === "ai" ? "ai-workspace" : ""} ${isReal ? "real-workspace" : ""}`}
       >
         <aside
           className={`control-panel ${controlsOpen ? "controls-open" : "controls-collapsed"}`}
@@ -795,6 +842,18 @@ export default function App() {
                   aria-label="AI experiment"
                 >
                   <button
+                    aria-pressed={aiView === "real"}
+                    onClick={() => {
+                      if (!realHasOpened) {
+                        setRealHasOpened(true);
+                        if (pointCount === 8) setPointCount(120);
+                      }
+                      setAiView("real");
+                    }}
+                  >
+                    Real embeddings
+                  </button>
+                  <button
                     aria-pressed={aiView === "teaching"}
                     onClick={() => setAiView("teaching")}
                   >
@@ -819,7 +878,20 @@ export default function App() {
                     Vector analogy
                   </button>
                 </div>
-                {aiView === "pca" ? (
+                {aiView === "real" ? (
+                  <RealPanel
+                    state={real.state}
+                    query={realQuery}
+                    onQueryChange={setRealQuery}
+                    onSearch={() => real.search(realQuery)}
+                    onGenerate={() => real.generate(realQuery)}
+                    onRetry={real.retry}
+                    pointCount={pointCount}
+                    onPointCountChange={setPointCount}
+                    selectedId={realSelectedId}
+                    onSelect={setRealSelectedId}
+                  />
+                ) : aiView === "pca" ? (
                   <PcaLesson
                     queryId={pcaQueryId}
                     onQueryIdChange={setPcaQueryId}
@@ -864,28 +936,34 @@ export default function App() {
                 <span>
                   {scenario === "math"
                     ? `EXPERIMENT ${String(operationIndex).padStart(2, "0")}`
-                    : "TEACHING VECTORS"}
+                    : isReal
+                      ? "REAL EMBEDDINGS"
+                      : "TEACHING VECTORS"}
                 </span>
               </div>
               <h2>
                 {scenario === "math"
                   ? operationLabels[operation]
-                  : isPca
-                    ? "From four dimensions to three"
-                    : isAnalogy
-                      ? "An analogy in vector arithmetic"
-                      : aiView === "counts"
-                        ? "From words to count vectors"
-                        : "The geometry of similarity"}
+                  : isReal
+                    ? "Meaning, mapped into a semantic landscape"
+                    : isPca
+                      ? "From four dimensions to three"
+                      : isAnalogy
+                        ? "An analogy in vector arithmetic"
+                        : aiView === "counts"
+                          ? "From words to count vectors"
+                          : "The geometry of similarity"}
               </h2>
               <p>
                 {scenario === "math"
                   ? descriptions[operation]
-                  : isPca
-                    ? "Compute similarity in the original space. Explore what projection changes."
-                    : isAnalogy
-                      ? "Subtract a relation. Add a new starting point. Inspect the computed offset."
-                      : "Every point is a document. Every connection begins with a vector."}
+                  : isReal
+                    ? "Trained sentence embeddings. Full-dimensional semantic search. Source-based local generation."
+                    : isPca
+                      ? "Compute similarity in the original space. Explore what projection changes."
+                      : isAnalogy
+                        ? "Subtract a relation. Add a new starting point. Inspect the computed offset."
+                        : "Every point is a document. Every connection begins with a vector."}
               </p>
             </div>
             <span className="dimension-badge">
@@ -920,13 +998,15 @@ export default function App() {
                 <span className="scene-live-dot" />
                 {scenario === "math"
                   ? "Free 3D space"
-                  : isPca
-                    ? "PCA projection · approximate visualization"
-                    : isAnalogy
-                      ? "Contrived 3D analogy vectors"
-                      : normalized
-                        ? "Normalized teaching vectors"
-                        : "3D teaching vectors"}
+                  : isReal
+                    ? "UMAP projection · real 384D text embeddings"
+                    : isPca
+                      ? "PCA projection · approximate visualization"
+                      : isAnalogy
+                        ? "Contrived 3D analogy vectors"
+                        : normalized
+                          ? "Normalized teaching vectors"
+                          : "3D teaching vectors"}
               </div>
               <div className="scene-tools">
                 <button
@@ -954,49 +1034,64 @@ export default function App() {
                 u={
                   scenario === "math"
                     ? inputs.u
-                    : isPca
-                      ? pcaView.query
-                      : isAnalogy
-                        ? analogyResult(analogyReverse)
-                        : queryVector
+                    : isReal
+                      ? (real.state.queryPosition ?? ZERO)
+                      : isPca
+                        ? pcaView.query
+                        : isAnalogy
+                          ? analogyResult(analogyReverse)
+                          : queryVector
                 }
                 v={scenario === "math" ? inputs.v : ZERO}
                 result={scenario === "math" ? lesson.result : undefined}
                 secondary={scenario === "math" ? lesson.secondary : undefined}
                 operation={scenario === "math" ? operation : "ai"}
-                showSphere={isPca ? false : showSphere}
-                showGrid={showGrid}
+                showSphere={isPca || isReal ? false : showSphere}
+                showGrid={!isReal && showGrid}
                 showSpan={showSpan}
                 showLabels={showLabels}
                 resetKey={resetKey}
                 playProgress={progress}
                 points={
                   scenario === "ai"
-                    ? isPca
-                      ? pcaView.points
-                      : isAnalogy
-                        ? analogyPoints
-                        : aiPoints
+                    ? isReal
+                      ? realScenePoints
+                      : isPca
+                        ? pcaView.points
+                        : isAnalogy
+                          ? analogyPoints
+                          : aiPoints
                     : undefined
                 }
                 selectedPoint={
-                  isPca
-                    ? pcaSelectedId
-                    : isAnalogy
-                      ? analogySelectedId
-                      : selectedId
+                  isReal
+                    ? realSelectedId
+                    : isPca
+                      ? pcaSelectedId
+                      : isAnalogy
+                        ? analogySelectedId
+                        : selectedId
                 }
                 onSelectPoint={
-                  isPca
-                    ? setPcaSelectedId
-                    : isAnalogy
-                      ? setAnalogySelectedId
-                      : setSelectedId
+                  isReal
+                    ? setRealSelectedId
+                    : isPca
+                      ? setPcaSelectedId
+                      : isAnalogy
+                        ? setAnalogySelectedId
+                        : setSelectedId
                 }
-                normalizedPoints={!isPca && !isAnalogy && normalized}
+                normalizedPoints={!isReal && !isPca && !isAnalogy && normalized}
                 aiMetric={
-                  scenario === "ai" && !isPca && !isAnalogy ? metric : undefined
+                  scenario === "ai" && !isReal && !isPca && !isAnalogy
+                    ? metric
+                    : undefined
                 }
+                clusterMode={isReal}
+                clusterLabels={isReal ? realClusterLabels : undefined}
+                showConnections={showClusterConnections}
+                queryVisible={isReal ? !!real.state.queryPosition : undefined}
+                queryLabel={isReal ? "Your query" : undefined}
                 nullBasis={lesson.nullBasis}
                 basis={inputs.basis}
                 target={inputs.target}
@@ -1014,9 +1109,35 @@ export default function App() {
                 gramProjection={lesson.gramProjection}
                 gramResidual={lesson.gramResidual}
               />
+              {isReal && real.state.points.length === 0 && (
+                <div className="real-scene-loading" role="status">
+                  <BrainCircuit size={32} />
+                  <strong>
+                    {real.state.status === "error"
+                      ? "The model needs attention"
+                      : "Building a learned semantic landscape"}
+                  </strong>
+                  <span>{real.state.message}</span>
+                  <small>
+                    Points appear after the real embeddings and projection are
+                    ready.
+                  </small>
+                </div>
+              )}
             </div>
             <div className="scene-legend">
-              {scenario === "math" ? (
+              {isReal ? (
+                <>
+                  <span>
+                    <i style={{ background: "#dce9ff" }} />
+                    Query
+                  </span>
+                  <span className="legend-caption">
+                    Real text embeddings · {real.state.points.length} documents
+                    · 384 dimensions
+                  </span>
+                </>
+              ) : scenario === "math" ? (
                 <>
                   <span>
                     <i style={{ background: "#649cff" }} />
@@ -1076,11 +1197,13 @@ export default function App() {
               Scene layers
             </span>
             <div>
-              <LayerToggle checked={showGrid} onChange={setShowGrid}>
-                <Grid3X3 size={13} />
-                Grid
-              </LayerToggle>
-              {!isPca && (
+              {!isReal && (
+                <LayerToggle checked={showGrid} onChange={setShowGrid}>
+                  <Grid3X3 size={13} />
+                  Grid
+                </LayerToggle>
+              )}
+              {!isReal && !isPca && (
                 <LayerToggle checked={showSphere} onChange={setShowSphere}>
                   Unit sphere
                 </LayerToggle>
@@ -1101,14 +1224,37 @@ export default function App() {
                   </LayerToggle>
                 </>
               )}
-              <LayerToggle
-                checked={showReferencePlanes}
-                onChange={setShowReferencePlanes}
-              >
-                Reference planes
-              </LayerToggle>
+              {!isReal && (
+                <LayerToggle
+                  checked={showReferencePlanes}
+                  onChange={setShowReferencePlanes}
+                >
+                  Reference planes
+                </LayerToggle>
+              )}
+              {isReal && (
+                <LayerToggle
+                  checked={showClusterConnections}
+                  onChange={setShowClusterConnections}
+                >
+                  Retrieval links
+                </LayerToggle>
+              )}
             </div>
           </div>
+          {isReal && (
+            <div
+              className="real-topic-legend"
+              aria-label="Cluster topic colors"
+            >
+              {realClusterLabels.map((topic) => (
+                <span key={topic.label}>
+                  <i style={{ background: topic.color }} />
+                  {topic.label}
+                </span>
+              ))}
+            </div>
+          )}
 
           {scenario === "math" && (
             <VectorDetails
@@ -1170,12 +1316,16 @@ export default function App() {
               </div>
               <div>
                 <h3>
-                  {isPca
-                    ? "A projection is a useful picture, not the original space."
-                    : "Similar directions. Related ideas."}
+                  {isReal
+                    ? "Semantic relationships, learned from text."
+                    : isPca
+                      ? "A projection is a useful picture, not the original space."
+                      : "Similar directions. Related ideas."}
                 </h3>
                 <p>
-                  {isPca ? (
+                  {isReal ? (
+                    "The trained sentence model embeds a bundled sample corpus. Colors indicate document topics; UMAP positions are computed from the learned vectors without using those labels. Retrieval uses full 384-dimensional cosine similarity, and the answer model reads only the retrieved context supplied to it."
+                  ) : isPca ? (
                     "This local PCA lesson computes a three-dimensional view of synthetic four-dimensional vectors. Original-space rankings and projected scores are shown separately: centering and dropping a component can change angles, distances, and neighbors."
                   ) : (
                     <>
@@ -1187,7 +1337,9 @@ export default function App() {
                   )}
                 </p>
               </div>
-              <span className="simulation-badge">NO LIVE MODEL</span>
+              <span className="simulation-badge">
+                {isReal ? "ON-DEVICE MODELS" : "NO LIVE MODEL"}
+              </span>
             </div>
           )}
         </section>
@@ -1206,11 +1358,13 @@ export default function App() {
             <p>
               {scenario === "math"
                 ? `Explore ${operationLabels[operation].toLowerCase()} one step at a time.`
-                : isPca
-                  ? "See what is preserved, and what is lost, when dimensions are reduced."
-                  : isAnalogy
-                    ? "Follow the offset using transparent teaching coordinates."
-                    : "Build a query, explore its neighbors, and follow the sources."}
+                : isReal
+                  ? "Follow real embeddings into semantic retrieval and a locally generated, source-based answer."
+                  : isPca
+                    ? "See what is preserved, and what is lost, when dimensions are reduced."
+                    : isAnalogy
+                      ? "Follow the offset using transparent teaching coordinates."
+                      : "Build a query, explore its neighbors, and follow the sources."}
             </p>
           </div>
           {scenario === "math" ? (
@@ -1296,31 +1450,40 @@ export default function App() {
             >
               <h3 className="section-kicker">HOW TO EXPLORE</h3>
               <ol className="instruction-list">
-                {(isPca
+                {(isReal
                   ? [
-                      "Choose a four-dimensional query in the left panel.",
-                      "Inspect the original 4D vector and its 3D PCA coordinates.",
-                      "Compare original cosine and distance with projected values.",
-                      "Select points G and H: the discarded feature separates them in 4D even though their 3D positions coincide.",
-                      "Open the calculation details to inspect the mean, eigenvalues, and explained variance.",
+                      "Allow the trained sentence model to load. Public model files download on first use and are cached by your browser.",
+                      "Set the number of documents from 8 to 500. Each point represents an actual model embedding of a sample passage.",
+                      "Type a natural-language question and choose Semantic search. Similarity is calculated across all 384 dimensions, not from the 3D picture.",
+                      "Select a ranked document or click a point. Colors describe topics; the computed UMAP projection may distort distances between clusters.",
+                      "Choose Generate grounded answer. The local language model loads on demand and receives the top retrieved passages as context.",
+                      "Read the source cards alongside the generated answer. The compact local model can make mistakes; citations identify the supplied context, not a guarantee of every claim.",
                     ]
-                  : isAnalogy
+                  : isPca
                     ? [
-                        "Select a forward or reverse analogy preset.",
-                        "Read the coordinates for each country and capital.",
-                        "Subtract the first country, then add the destination country.",
-                        "Compare the computed arrow with its matching capital point. These equalities are contrived teaching examples.",
+                        "Choose a four-dimensional query in the left panel.",
+                        "Inspect the original 4D vector and its 3D PCA coordinates.",
+                        "Compare original cosine and distance with projected values.",
+                        "Select points G and H: the discarded feature separates them in 4D even though their 3D positions coincide.",
+                        "Open the calculation details to inspect the mean, eigenvalues, and explained variance.",
                       ]
-                    : [
-                        "Enter a query or choose a preset; recognized words determine its three feature counts.",
-                        "Set the number of points, use a quick preset, or add 25 synthetic examples.",
-                        "Switch between cosine similarity and Euclidean distance. Scores are computed from the current corpus.",
-                        "Select a document in the list or click a point to inspect its text and coordinates.",
-                        aiView === "counts"
-                          ? "Open the count matrix. Its displayed counts are the plotted document coordinates."
-                          : "Turn on normalized directions to compare angles; the numeric ranking still uses the original vectors.",
-                        "Expand Retrieval to Answer, then choose Retrieve, Context, and Answer to follow the source-based simulation.",
-                      ]
+                    : isAnalogy
+                      ? [
+                          "Select a forward or reverse analogy preset.",
+                          "Read the coordinates for each country and capital.",
+                          "Subtract the first country, then add the destination country.",
+                          "Compare the computed arrow with its matching capital point. These equalities are contrived teaching examples.",
+                        ]
+                      : [
+                          "Enter a query or choose a preset; recognized words determine its three feature counts.",
+                          "Set the number of points, use a quick preset, or add 25 synthetic examples.",
+                          "Switch between cosine similarity and Euclidean distance. Scores are computed from the current corpus.",
+                          "Select a document in the list or click a point to inspect its text and coordinates.",
+                          aiView === "counts"
+                            ? "Open the count matrix. Its displayed counts are the plotted document coordinates."
+                            : "Turn on normalized directions to compare angles; the numeric ranking still uses the original vectors.",
+                          "Expand Retrieval to Answer, then choose Retrieve, Context, and Answer to follow the source-based simulation.",
+                        ]
                 ).map((instruction, index) => (
                   <li key={instruction}>
                     <span className="step-number">{index + 1}</span>
@@ -1345,9 +1508,11 @@ export default function App() {
               <strong>Reset</strong> Restore the canonical view.
             </p>
             <p>
-              {isPca
-                ? "The PCA plot is approximate. Its visible distances and angles can differ from the original scores."
-                : "The unit sphere has radius 1. It is a reference surface; vectors can extend beyond it."}
+              {isReal
+                ? "Cluster positions are an approximate UMAP projection. Scores use the original learned vectors. Glowing particles are a display style, not fabricated similarity data."
+                : isPca
+                  ? "The PCA plot is approximate. Its visible distances and angles can differ from the original scores."
+                  : "The unit sphere has radius 1. It is a reference surface; vectors can extend beyond it."}
             </p>
           </section>
         </aside>

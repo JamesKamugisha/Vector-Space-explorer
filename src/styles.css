@@ -1917,3 +1917,91 @@ button {
   outline: 3px solid #458df5;
   outline-offset: 3px;
 }
+.real-scene-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 55px;
+  text-align: center;
+  pointer-events: none;
+  color: #b7cae5;
+  background: radial-gradient(ellipse, #102244b0, #08132880);
+}
+.real-scene-loading > svg {
+  color: #88aee8;
+}
+.real-scene-loading strong {
+  font-family: Manrope, sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: #e2ecfa;
+}
+.real-scene-loading span {
+  font-size: 13px;
+  max-width: 370px;
+  line-height: 1.7;
+}
+.real-scene-loading small {
+  font-size: 11px;
+  color: #a2b9d9;
+}
+.real-topic-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: -3px 0 18px;
+  padding: 13px 15px;
+  background: #0e1c32;
+  border: 1px solid #233955;
+  border-radius: 8px;
+  color: #c4d4e9;
+  font-size: 12px;
+}
+.real-topic-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.real-topic-legend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 7px currentColor;
+}
+.real-workspace .ai-view-switch button[aria-pressed="true"] {
+  background: #e7f5f0;
+  border-color: #97cbb9;
+  color: #245f50;
+}
+.real-workspace .scene-card {
+  background: #070e20;
+  border-color: #10233c;
+}
+@media (min-width: 901px) {
+  .real-workspace .experiment-area {
+    top: 12px;
+  }
+  .real-workspace .scene-viewport {
+    height: 460px;
+  }
+}
+@media (max-width: 600px) {
+  .real-scene-loading {
+    padding: 40px 22px;
+  }
+  .real-scene-loading strong {
+    font-size: 18px;
+  }
+  .real-topic-legend {
+    gap: 13px;
+  }
+  .real-workspace .scene-mode {
+    max-width: 70%;
+    font-size: 9px;
+  }
+}

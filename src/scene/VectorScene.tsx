@@ -53,6 +53,12 @@ export interface VectorSceneProps {
   gramProjection?: Vec3;
   gramResidual?: Vec3;
   aiMetric?: "cosine" | "euclidean";
+  clusterMode?: boolean;
+  clusterLabels?: Array<{ label: string; position: Vec3; color: string }>;
+  clusterLinks?: Array<[string, string]>;
+  showConnections?: boolean;
+  queryVisible?: boolean;
+  queryLabel?: string;
 }
 
 type SceneLabel = {
@@ -74,6 +80,21 @@ const C = {
 };
 const vector = (v: Vec3) => new THREE.Vector3(...v);
 const finite = (v?: Vec3): v is Vec3 => !!v && v.every(Number.isFinite);
+function particleTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  const context = canvas.getContext("2d")!;
+  const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.16, "rgba(255,255,255,.8)");
+  gradient.addColorStop(0.4, "rgba(255,255,255,.24)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 64, 64);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
 const fmt = (v: Vec3) =>
   `(${v.map((x) => (x === 0 ? "0" : Number(x.toPrecision(6)))).join(", ")})`;
 const disposeObject = (object: THREE.Object3D) => {
@@ -139,7 +160,7 @@ function createEngine(
     string,
     { arrow: THREE.ArrowHelper; dot: THREE.Mesh; label: SceneLabel }
   >();
-  const pointMeshes: THREE.Mesh[] = [];
+  const pointMeshes: THREE.Object3D[] = [];
   const sphere = new THREE.Mesh(
     new THREE.SphereGeometry(1, 48, 32),
     new THREE.MeshBasicMaterial({
@@ -310,6 +331,33 @@ function createEngine(
   let staticUpdates = 0;
   let embeddingGeneration = 0;
   let previousBoundsKey = "";
+  let clusterCloud: THREE.Points | null = null;
+  let clusterCore: THREE.Points | null = null;
+  let clusterCapacity = 0;
+  let framedClusterCount = 0;
+  let fitPositions: Vec3[] = [];
+  const glowTexture = particleTexture();
+  const queryMarker = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: glowTexture,
+      color: "#ffe2a3",
+      transparent: true,
+      opacity: 1,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  const selectionHalo = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: glowTexture,
+      color: "#ffffff",
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  fixed.add(queryMarker, selectionHalo);
   const pointGeometry = new THREE.SphereGeometry(0.09, 20, 12);
   const dotGeometry = new THREE.SphereGeometry(0.048, 16, 10);
   let ticks = new THREE.Group();
@@ -332,6 +380,8 @@ function createEngine(
     embeddingMeshes.clear();
     embeddingInstances = null;
     embeddingKey = "";
+    clusterCloud = clusterCore = null;
+    clusterCapacity = 0;
     host.dataset.scenePointCount = "0";
   };
   const line = (
@@ -717,6 +767,194 @@ function createEngine(
     }
   };
 
+  const updateClusters = (next: VectorSceneProps) => {
+    const points = (next.points || []).filter((point) =>
+      finite(point.position),
+    );
+    if (!clusterCloud || !clusterCore || points.length > clusterCapacity) {
+      clearEmbedding();
+      clusterCapacity = Math.max(
+        512,
+        2 ** Math.ceil(Math.log2(Math.max(1, points.length))),
+      );
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+          new Float32Array(clusterCapacity * 3),
+          3,
+        ).setUsage(THREE.DynamicDrawUsage),
+      );
+      geometry.setAttribute(
+        "color",
+        new THREE.BufferAttribute(
+          new Float32Array(clusterCapacity * 3),
+          3,
+        ).setUsage(THREE.DynamicDrawUsage),
+      );
+      const material = (size: number, opacity: number) =>
+        new THREE.PointsMaterial({
+          map: glowTexture,
+          size,
+          sizeAttenuation: true,
+          vertexColors: true,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          toneMapped: false,
+        });
+      clusterCloud = new THREE.Points(geometry, material(extent * 0.075, 0.38));
+      clusterCore = new THREE.Points(geometry, material(extent * 0.026, 0.9));
+      embeddingGroup.add(clusterCloud, clusterCore);
+      pointMeshes.push(clusterCore);
+      embeddingKey = "cluster";
+      embeddingGeneration++;
+      host.dataset.sceneEmbeddingGeneration = String(embeddingGeneration);
+    }
+    const positions = clusterCloud.geometry.getAttribute(
+      "position",
+    ) as THREE.BufferAttribute;
+    const colors = clusterCloud.geometry.getAttribute(
+      "color",
+    ) as THREE.BufferAttribute;
+    const ids: string[] = [];
+    const color = new THREE.Color();
+    points.forEach((point, index) => {
+      positions.setXYZ(index, ...point.position);
+      color.set(point.color || "#799bff");
+      colors.setXYZ(index, color.r, color.g, color.b);
+      ids.push(point.id);
+    });
+    positions.needsUpdate = colors.needsUpdate = true;
+    clusterCloud.geometry.setDrawRange(0, points.length);
+    clusterCloud.geometry.computeBoundingSphere();
+    clusterCore.userData.pointIds = ids;
+    (clusterCloud.material as THREE.PointsMaterial).size = extent * 0.075;
+    (clusterCore.material as THREE.PointsMaterial).size = extent * 0.026;
+    host.dataset.scenePointCount = String(points.length);
+    host.dataset.sceneClusterMode = "true";
+    const hasQuery =
+      finite(next.u) && (next.queryVisible ?? Math.hypot(...next.u) > 0);
+    queryMarker.visible = hasQuery;
+    queryMarker.position.copy(vector(next.u));
+    queryMarker.scale.setScalar(extent * 0.12);
+    if (hasQuery) {
+      const label = addLabel(
+        next.queryLabel || "QUERY",
+        vector(next.u),
+        "#ffe2a3",
+      );
+      label.element.dataset.priority = "95";
+      dynamicLabels.push(label);
+    }
+    const selected = points.find((point) => point.id === next.selectedPoint);
+    selectionHalo.visible = !!selected;
+    if (selected) {
+      selectionHalo.position.copy(vector(selected.position));
+      selectionHalo.scale.setScalar(extent * 0.12);
+      (selectionHalo.material as THREE.SpriteMaterial).color.set(
+        selected.color || "#a9c4ff",
+      );
+    }
+    const topIds = new Set(
+      points
+        .filter((point) => point.score !== undefined)
+        .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity))
+        .slice(0, 4)
+        .map((point) => point.id),
+    );
+    points
+      .filter((point) => point.id === selected?.id || topIds.has(point.id))
+      .forEach((point) => {
+        const label = addLabel(
+          point.label,
+          vector(point.position),
+          point.color || "#a9c4ff",
+        );
+        label.element.classList.toggle("selected", point.id === selected?.id);
+        dynamicLabels.push(label);
+      });
+    (next.clusterLabels || [])
+      .filter((cluster) => finite(cluster.position))
+      .forEach((cluster) => {
+        const label = addLabel(
+          cluster.label,
+          vector(cluster.position),
+          cluster.color,
+        );
+        label.element.classList.add("scene-cluster-label");
+        label.element.dataset.priority = "85";
+        dynamicLabels.push(label);
+      });
+    if (next.showConnections) {
+      const byId = new Map(points.map((point) => [point.id, point]));
+      const vertices: number[] = [];
+      for (const [left, right] of next.clusterLinks || []) {
+        const a = byId.get(left),
+          b = byId.get(right);
+        if (a && b) vertices.push(...a.position, ...b.position);
+      }
+      if (vertices.length)
+        dynamic.add(
+          new THREE.LineSegments(
+            new THREE.BufferGeometry().setAttribute(
+              "position",
+              new THREE.Float32BufferAttribute(vertices, 3),
+            ),
+            new THREE.LineBasicMaterial({
+              color: "#6993c4",
+              transparent: true,
+              opacity: 0.12,
+              depthWrite: false,
+            }),
+          ),
+        );
+      if (hasQuery)
+        points
+          .filter((point) => point.score !== undefined)
+          .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity))
+          .slice(0, 5)
+          .forEach((point) =>
+            line(
+              [vector(next.u), vector(point.position)],
+              point.color || "#91bef4",
+              false,
+              0.25,
+            ),
+          );
+    }
+  };
+
+  const clusterFitDistance = (direction: THREE.Vector3) => {
+    const forward = direction.clone().negate();
+    const right = new THREE.Vector3()
+      .crossVectors(
+        forward,
+        Math.abs(forward.z) > 0.9999
+          ? new THREE.Vector3(0, 1, 0)
+          : new THREE.Vector3(0, 0, 1),
+      )
+      .normalize();
+    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+    const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    return (
+      Math.max(
+        1,
+        ...fitPositions.map((position) => {
+          const p = vector(position).sub(controls.target);
+          return (
+            p.dot(direction) +
+            Math.max(
+              Math.abs(p.dot(right)) / (tangent * (width / height) * 0.8),
+              Math.abs(p.dot(up)) / (tangent * 0.66),
+            )
+          );
+        }),
+      ) * 1.05
+    );
+  };
+
   const update = (next: VectorSceneProps) => {
     const nextStaticKey = JSON.stringify({
       ...next,
@@ -732,6 +970,12 @@ function createEngine(
     staticUpdates++;
     host.dataset.sceneStaticUpdates = String(staticUpdates);
     props = next;
+    scene.background = new THREE.Color(
+      next.clusterMode ? "#050d1c" : "#101b32",
+    );
+    queryMarker.visible = selectionHalo.visible = false;
+    origin.visible = !next.clusterMode;
+    host.dataset.sceneClusterMode = next.clusterMode ? "true" : "false";
     clearDynamic();
     arrows.forEach((entry) => {
       entry.arrow.visible = false;
@@ -742,12 +986,15 @@ function createEngine(
     // Other lessons' retained input state must not set the scale of this scene.
     const visiblePositions: Array<Vec3 | undefined> = [];
     if (next.points) {
-      visiblePositions.push(
-        next.normalizedPoints ? normalizeMath(next.u) || [0, 0, 0] : next.u,
-      );
+      if (!next.clusterMode || (next.queryVisible ?? Math.hypot(...next.u) > 0))
+        visiblePositions.push(
+          next.normalizedPoints && !next.clusterMode
+            ? normalizeMath(next.u) || [0, 0, 0]
+            : next.u,
+        );
       next.points.forEach((point) =>
         visiblePositions.push(
-          next.normalizedPoints
+          next.normalizedPoints && !next.clusterMode
             ? normalizeMath(point.position) || [0, 0, 0]
             : point.position,
         ),
@@ -783,6 +1030,7 @@ function createEngine(
         );
     }
     const vectors = visiblePositions.filter(finite);
+    fitPositions = vectors;
     const boundsKey = JSON.stringify(vectors);
     const boundsChanged = boundsKey !== previousBoundsKey;
     previousBoundsKey = boundsKey;
@@ -791,14 +1039,15 @@ function createEngine(
     extent = Math.max(2.6, longest * 1.3);
     origin.scale.setScalar(extent / 4);
     grid.scale.setScalar(extent / 5);
-    referencePlanes.visible = !!next.showReferencePlanes;
+    referencePlanes.visible = !!next.showReferencePlanes && !next.clusterMode;
     referencePlanes.scale.setScalar(extent);
-    host.dataset.sceneReferencePlanes = next.showReferencePlanes ? "2" : "0";
+    host.dataset.sceneReferencePlanes = referencePlanes.visible ? "2" : "0";
     normShells.forEach((shell, index) => {
       const source = index === 0 ? next.u : next.v;
       const radius = Math.hypot(...source);
       shell.visible =
         !!next.showNormShells &&
+        !next.clusterMode &&
         radius > 0 &&
         !["basis", "nullspace"].includes(next.operation) &&
         !(index === 1 && ["scale", "normalize"].includes(next.operation));
@@ -860,8 +1109,13 @@ function createEngine(
         if (ticks.children.length > 150) break;
       }
     }
-    sphere.visible = guides.visible = next.showSphere;
-    grid.visible = next.showGrid;
+    sphere.visible = guides.visible = next.showSphere && !next.clusterMode;
+    grid.visible = next.showGrid && !next.clusterMode;
+    ticks.visible = !next.clusterMode;
+    axes.forEach(({ line, label }) => {
+      line.visible = !next.clusterMode;
+      label.element.dataset.visible = next.clusterMode ? "false" : "true";
+    });
     const outsideView =
       boundsChanged &&
       vectors.some((position) => {
@@ -873,13 +1127,19 @@ function createEngine(
           Math.abs(projectedPosition.y) > 0.86
         );
       });
-    if (!didFit || outsideView) {
+    const clusterCount = next.clusterMode ? next.points?.length || 0 : 0;
+    const newClusterLayout =
+      clusterCount > 0 && clusterCount !== framedClusterCount;
+    framedClusterCount = clusterCount;
+    if (!didFit || outsideView || newClusterLayout) {
       const direction = camera.position
         .clone()
         .sub(controls.target)
         .normalize();
       if (!didFit) direction.set(7, -9, 6).normalize();
-      const distance = extent * (width < height ? 4.2 : 3.05);
+      const distance = next.clusterMode
+        ? clusterFitDistance(direction)
+        : extent * (width < height ? 4.2 : 3.05);
       camera.position
         .copy(controls.target)
         .addScaledVector(direction, distance);
@@ -890,7 +1150,8 @@ function createEngine(
       didFit = true;
     }
 
-    if (next.points) {
+    if (next.clusterMode && next.points) updateClusters(next);
+    else if (next.points) {
       const query =
         next.normalizedPoints && vector(next.u).length()
           ? (vector(next.u).normalize().toArray() as Vec3)
@@ -1255,6 +1516,7 @@ function createEngine(
     );
     raycaster.setFromCamera(pointer, camera);
     raycaster.params.Line = { threshold: extent * 0.025 };
+    raycaster.params.Points = { threshold: extent * 0.025 };
     return raycaster
       .intersectObjects([...pointMeshes, ...arrowGroup.children], true)
       .find((item) => {
@@ -1282,7 +1544,10 @@ function createEngine(
       hit?.object.userData.id ||
       (hit?.instanceId === undefined
         ? undefined
-        : hit.object.userData.instanceIds?.[hit.instanceId]);
+        : hit.object.userData.instanceIds?.[hit.instanceId]) ||
+      (hit?.index === undefined
+        ? undefined
+        : hit.object.userData.pointIds?.[hit.index]);
     if (id) onSelection(String(id));
     let object: THREE.Object3D | null = hit?.object || null;
     while (object) {
@@ -1322,11 +1587,14 @@ function createEngine(
         hit.object.userData.id ||
         (hit.instanceId === undefined
           ? undefined
-          : hit.object.userData.instanceIds?.[hit.instanceId]);
+          : hit.object.userData.instanceIds?.[hit.instanceId]) ||
+        (hit.index === undefined
+          ? undefined
+          : hit.object.userData.pointIds?.[hit.index]);
       if (!text && id) {
         const point = props.points?.find((p) => p.id === id);
         if (point)
-          text = `${point.label}\n${fmt(point.position)}${point.score === undefined ? "" : `\nSimilarity / distance: ${point.score.toFixed(4)}`}`;
+          text = `${point.label}\n${props.clusterMode ? "Projected " : ""}${fmt(point.position)}${point.score === undefined ? "" : `\n${props.clusterMode ? "Original-space score" : "Similarity / distance"}: ${point.score.toFixed(4)}`}`;
       }
     }
     tooltip.style.display = text ? "" : "none";
@@ -1461,22 +1729,27 @@ function createEngine(
         occupied.push({ x: placement.x, y: placement.y, w, h });
         label.element.style.transform = `translate(${placement.x}px, ${placement.y}px)`;
       });
-    const size = Math.min(90, width * 0.2);
-    const left = width - size - 8;
-    const bottom = 42;
-    gizmoCamera.position
-      .copy(camera.position)
-      .sub(controls.target)
-      .normalize()
-      .multiplyScalar(4.7);
-    gizmoCamera.lookAt(0, 0, 0);
-    renderer.clearDepth();
-    renderer.setViewport(left, bottom, size, size);
-    renderer.render(gizmoScene, gizmoCamera);
     gizmoLabels.forEach((label) => {
-      projected.copy(label.tip).project(gizmoCamera);
-      label.element.style.transform = `translate(${left + (projected.x * 0.5 + 0.5) * size - 4}px, ${height - bottom - size + (-projected.y * 0.5 + 0.5) * size - 5}px)`;
+      label.element.style.display = props?.clusterMode ? "none" : "";
     });
+    if (!props?.clusterMode) {
+      const size = Math.min(90, width * 0.2);
+      const left = width - size - 8;
+      const bottom = 42;
+      gizmoCamera.position
+        .copy(camera.position)
+        .sub(controls.target)
+        .normalize()
+        .multiplyScalar(4.7);
+      gizmoCamera.lookAt(0, 0, 0);
+      renderer.clearDepth();
+      renderer.setViewport(left, bottom, size, size);
+      renderer.render(gizmoScene, gizmoCamera);
+      gizmoLabels.forEach((label) => {
+        projected.copy(label.tip).project(gizmoCamera);
+        label.element.style.transform = `translate(${left + (projected.x * 0.5 + 0.5) * size - 4}px, ${height - bottom - size + (-projected.y * 0.5 + 0.5) * size - 5}px)`;
+      });
+    }
     frameCount++;
     const elapsed = performance.now() - frameWindowStart;
     if (elapsed > 1000) {
@@ -1522,7 +1795,11 @@ function createEngine(
       camera.position
         .set(7, -9, 6)
         .normalize()
-        .multiplyScalar(extent * (width < height ? 4.2 : 3.05));
+        .multiplyScalar(
+          props?.clusterMode
+            ? clusterFitDistance(new THREE.Vector3(7, -9, 6).normalize())
+            : extent * (width < height ? 4.2 : 3.05),
+        );
       camera.up.set(0, 0, 1);
       controls.maxDistance = Math.max(40, extent * 12);
       camera.far = Math.max(200, extent * 25);
@@ -1542,6 +1819,7 @@ function createEngine(
       disposeObject(gizmoScene);
       pointGeometry.dispose();
       dotGeometry.dispose();
+      glowTexture.dispose();
       labels.forEach((label) => label.element.remove());
       gizmoLabels.forEach((label) => label.element.remove());
       tooltip.remove();
@@ -1559,6 +1837,7 @@ function createEngine(
       delete host.dataset.sceneVectorValues;
       delete host.dataset.sceneNormRadii;
       delete host.dataset.sceneUnitSphereRadius;
+      delete host.dataset.sceneClusterMode;
       renderer.dispose();
       renderer.domElement.remove();
     },
@@ -1619,6 +1898,12 @@ export default function VectorScene(props: VectorSceneProps) {
     props.gramProjection,
     props.gramResidual,
     props.aiMetric,
+    props.clusterMode,
+    props.clusterLabels,
+    props.clusterLinks,
+    props.showConnections,
+    props.queryVisible,
+    props.queryLabel,
   ]);
   useEffect(() => {
     engine.current?.reset();
@@ -1649,17 +1934,19 @@ export default function VectorScene(props: VectorSceneProps) {
       <div className="scene-webgl" ref={host} />
       <div className="scene-labels" ref={labelHost} aria-hidden="true" />
       <div className="scene-space-note">
-        {props.points &&
-        props.normalizedPoints &&
-        props.aiMetric === "euclidean"
-          ? "Normalized display · distance uses original vectors"
-          : props.showSphere
-            ? "Unit sphere · radius 1"
-            : "Cartesian coordinates · Z up"}
+        {props.clusterMode
+          ? "UMAP projection · neighborhoods are approximate"
+          : props.points &&
+              props.normalizedPoints &&
+              props.aiMetric === "euclidean"
+            ? "Normalized display · distance uses original vectors"
+            : props.showSphere
+              ? "Unit sphere · radius 1"
+              : "Cartesian coordinates · Z up"}
       </div>
       <div className="scene-subspace-note">
         {subspaceCaption}
-        {props.showSphere && (
+        {props.showSphere && !props.clusterMode && (
           <span>Sphere curves are orientation guides, not coordinates.</span>
         )}
       </div>
