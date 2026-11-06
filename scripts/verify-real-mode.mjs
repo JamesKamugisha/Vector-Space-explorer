@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { chromium } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 await mkdir("artifacts", { recursive: true });
 const context = await chromium.launchPersistentContext(
-  "artifacts/real-browser-profile",
+  process.env.REAL_PROFILE_DIR ||
+    join(tmpdir(), "vector-space-explorer-real-verify-profile"),
   {
     channel: "chrome",
     headless: true,
@@ -188,7 +191,10 @@ try {
     element.scrollTop = 0;
   });
   await page
-    .locator(".instructions-rail")
+    .getByRole("complementary", {
+      name: "Experiment instructions",
+      exact: true,
+    })
     .evaluate((element) => {
       element.scrollTop = 0;
     })
@@ -197,6 +203,49 @@ try {
     path: "artifacts/real-500-desktop.png",
     fullPage: true,
   });
+  await page
+    .locator(".scene-card")
+    .screenshot({ path: "artifacts/real-production-clusters.png" });
+  assert(
+    await page
+      .getByRole("complementary", {
+        name: "Experiment instructions",
+        exact: true,
+      })
+      .isVisible(),
+  );
+  const linksBefore = Number(
+    await page.locator(".scene-webgl").getAttribute("data-scene-geometries"),
+  );
+  await page
+    .getByRole("button", { name: "Retrieval links", exact: true })
+    .click();
+  await page.waitForFunction(
+    (before) =>
+      Number(document.querySelector(".scene-webgl").dataset.sceneGeometries) <
+      before,
+    linksBefore,
+    { timeout: 5000 },
+  );
+  const linksOff = Number(
+    await page.locator(".scene-webgl").getAttribute("data-scene-geometries"),
+  );
+  await page
+    .getByRole("button", { name: "Retrieval links", exact: true })
+    .click();
+  await page.waitForFunction(
+    (before) =>
+      Number(document.querySelector(".scene-webgl").dataset.sceneGeometries) ===
+      before,
+    linksBefore,
+    { timeout: 5000 },
+  );
+  report.retrievalLinks = {
+    geometriesOn: linksBefore,
+    geometriesOff: linksOff,
+    queryLinkCount: linksBefore - linksOff,
+  };
+  assert.equal(report.retrievalLinks.queryLinkCount, 5);
   const generationIndex = await page.evaluate(
     () => window.realVerificationMessages.length,
   );
@@ -361,6 +410,15 @@ try {
   report.workerMessages = await page.evaluate(
     () => window.realVerificationMessages,
   );
+  if (process.env.REAL_REQUIRE_WARM_CACHE === "1")
+    assert(
+      !report.workerMessages.some((message) =>
+        message.message?.includes(
+          "Computing actual 384-dimensional embeddings:",
+        ),
+      ),
+      "Cross-process warm cache should skip all document encoding.",
+    );
   assert(
     report.workerMessages.some((message) => message.queryVectorLength === 384),
   );

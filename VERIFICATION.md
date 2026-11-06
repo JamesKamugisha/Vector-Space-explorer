@@ -31,7 +31,7 @@ The separate seeded 500-point profile used automated Chrome 156 on this Windows 
 
 ## Scope and remaining checks
 
-The delivered deterministic baseline includes 13 mathematical operations, the configurable teaching AI lab, a computed synthetic 4D PCA lesson, vector analogy arithmetic, and a contextual right instructions sidebar. Step highlighting works across lessons; actual geometry playback includes addition, scaling, normalization, linear combination, basis reconstruction, and Gram–Schmidt. Projection onto a plane and PCA education are implemented. Real-model mode is an additional implementation with its own pending success checks below. Broad physical-device testing remains. Automated accessibility checks supplement manual keyboard/mobile review and do not constitute a complete accessibility certification.
+The delivered deterministic baseline includes 13 mathematical operations, the configurable teaching AI lab, a computed synthetic 4D PCA lesson, vector analogy arithmetic, and a contextual right instructions sidebar. Step highlighting works across lessons; actual geometry playback includes addition, scaling, normalization, linear combination, basis reconstruction, and Gram–Schmidt. Projection onto a plane and PCA education are implemented. Real-model mode has separate successful production checks below. Broad physical-device testing remains. Automated accessibility checks supplement manual keyboard/mobile review and do not constitute a complete accessibility certification.
 
 The app was deployed from GitHub to https://vector-space-explorer-lac.vercel.app/. The initial source commit passed remote Linux CI: https://github.com/JamesKamugisha/Vector-Space-explorer/actions/runs/42125685154. The initial 12 browser checks also passed against the live production URL, including accessibility, mathematical fixtures, AI retrieval, mobile layout, fallback behavior, camera reset, and resource stability.
 
@@ -39,7 +39,7 @@ The app was deployed from GitHub to https://vector-space-explorer-lac.vercel.app
 
 The November 5 follow-up compared the original specification with the live baseline and source. It completed the missing magnitude shells, reference planes, clickable math-vector details, numeric spherical inspector, plane projection, basis/Gram geometry playback, mobile collapse, real-world lesson examples, actual count-vector plotting, selected AI angle/distance readouts, synthetic PCA, and optional contrived analogy. The user-requested point setter renders the selected number of actual scene points; generated documents are labeled synthetic, and rankings/retrieval use those same arrays. The requested right sidebar contains contextual instructions and the single worked-step player. Dense-cloud labels use clamped collision avoidance and selected-point priority.
 
-The local checklist is intentionally excluded from the public repository together with the original specification and plans. It distinguishes the deterministic baseline, real-model implementation, pending inference verification, and physical-device testing.
+The local checklist is intentionally excluded from the public repository together with the original specification and plans. It distinguishes the deterministic baseline, verified real-model flow and persistent cache reuse, and remaining physical-device/additional-browser testing.
 
 ## Real-model implementation and verification
 
@@ -57,28 +57,36 @@ Completed verification for the real-mode interface:
 - `tests/e2e/real-mode.spec.ts` passes in installed Chrome. It deliberately aborts Hugging Face downloads to verify visible model errors, actionable retry that issues another model request, no fabricated rankings/answers, public model metadata, local-processing disclosures, numeric point-count limits, topic-query presets, and disabled search/generation before readiness.
 - Automated WCAG A/AA checks of the real-mode error/interface state report zero violations. No accessibility rule was disabled.
 
-Completed separate real-network execution in Chrome 156:
+Completed production real-network execution in Chrome 156 against https://vector-space-explorer-lac.vercel.app/, application source commit `649be8d`:
 
 - Actual MiniLM downloads and browser inference produced the 384-dimensional query representation and displayed real UMAP point sets for 120 and 500 sample passages. The 500-point scene reported 60 FPS in the captured sample; this is an observation on the test host, not a universal performance guarantee.
-- The question “Why do birds migrate to warmer places during winter?” ranked bird-migration passages first. With 500 passages, the leading result was “Bird migration · Seasonal survey,” cosine 0.649; subsequent leading results were other migration contexts. No mocked embedding output was supplied, and the run recorded no page errors or failed requests.
-- FLAN-T5 generated “Species differ in their routes, timing, and the distances they travel.” The supplied context IDs were `birds-043`, `birds-015`, and `birds-071`. The output is relevant to migration but incomplete: it does not explain the seasonal-resource reason asked by the question. This verifies actual generation and source-context wiring, not reliable answer quality or faithful generated citations.
+- The question “What parts of a bird help it fly?” ranked bird wing-shape passages first. With 500 passages, the leading result was “Wing shape · Habitat restoration,” cosine 0.532, followed by other wing-shape contexts. The query representation had 384 dimensions. No mocked embedding output was supplied, and the run recorded no page errors or failed requests.
+- FLAN-T5 generated “A bird’s wing shape” using context IDs `birds-060`, `birds-018`, and `birds-074`. The phrase is grounded in the retrieved passages, but it is brief rather than a complete explanation of all flight-related anatomy. The earlier local migration question also produced a relevant but incomplete answer. These observations verify actual generation and source-context wiring, not general answer accuracy or faithful generated citations.
+- Automated WCAG A/AA checks in the populated production results/generated-answer state reported zero violations. Clicking a real-cloud point changed the inspected source from `birds-060` to `cats-057`.
+- IndexedDB contained 500 cached embedding records. Returning to 120 and then 500 points in the same session skipped document inference and recomputed the projection. A separate Chrome process reusing the same persistent profile also completed the 120/500-point flow with no document-encoding phase reported anywhere in the warm run. This verifies persisted cache reuse for that profile and model/corpus version; it does not promise survival after cache eviction or across unrelated profiles.
+- The retrieval-link toggle changed scene geometry counts from 12 to 7 and back to 12, confirming that the five query links were removed and restored. Warm production verification again recorded zero page errors and zero automated accessibility violations, and real-cloud point selection passed.
 
-The ignored local `artifacts/real-verification.json` records model progress, rankings, scene diagnostics, generated text, and context IDs for this execution. Its initial UI stopwatch fields include test-harness waiting and are not used as trustworthy performance measurements.
+The ignored local `artifacts/real-verification-production-first.json` preserves the first successful production run. `artifacts/real-verification.json` records the later successful warm run in a separate process, including model progress, rankings, scene diagnostics, generated text, context IDs, accessibility, point selection, retrieval links, and cache observations. The verification script records native worker intervals rather than earlier harness waits.
 
 Intervals extracted from native worker-message timestamps, excluding the harness waits, were:
 
 | Stage | Observed interval |
 | --- | --- |
-| Initial 120-passage model loading, embedding, and projection | 9.101 seconds |
-| Expansion to 500 passages using the already loaded sentence model and first 120 embeddings | 15.494 seconds |
-| Two measured query embedding/projection/retrieval requests | 30 and 37 milliseconds |
-| Lazy FLAN-T5 loading and answer generation | 4.842 seconds |
+| Initial 120-passage model loading, embedding, and projection | 9.132 seconds |
+| Expansion to 500 passages using the already loaded sentence model and first 120 embeddings | 16.190 seconds |
+| Two measured query embedding/projection/retrieval requests | 12 and 10 milliseconds |
+| Lazy FLAN-T5 loading and answer generation | 5.088 seconds |
+| Warm same-session return to 120 passages | 2.051 seconds |
+| Warm same-session return to 500 passages | 3.049 seconds |
 
-These are observations from one Chrome 156 run on this Windows host and its connection. They are not guaranteed completion times, a cold 500-passage benchmark, or evidence of cache behavior across browser restarts. Use `npm run verify:real` against a running local server on port 5174 to reproduce actual inference; set `REAL_TEST_BASE_URL` for a deployment. This downloads real weights and is separate from the regular CI suite.
+The subsequent warm run in a separate Chrome process sharing the persistent profile completed initial 120-passage setup in 3.061 seconds, expansion to 500 in 3.042 seconds, and local answer generation in 2.041 seconds. Its same-session returns to 120 and 500 took 2.048 and 3.078 seconds. All 500 embedding records were present, and worker messages reported no document-encoding phase during this warm run.
 
-Remaining real-mode checks:
+These are observations from Chrome 156 runs on this Windows host and its connection. They are not guaranteed completion times or a cold 500-passage benchmark. Cache reuse was verified for the same persistent profile, not across cache eviction or arbitrary browsers. Use `npm run verify:real` against a running local server on port 5174 to reproduce actual inference; set `REAL_TEST_BASE_URL` for a deployment. This downloads real weights and is separate from the regular CI suite.
 
-- Confirm warm cache reuse across a new browser session and additional first-run, device, and browser behavior; native worker intervals above are only one local sample.
-- Verify the real-model release on the deployed Vercel URL after its source is published.
+Remote CI results are available in the repository's [GitHub Actions](https://github.com/JamesKamugisha/Vector-Space-explorer/actions). The local 46-unit/29-browser checks and successful production inference above are separate verification evidence.
+
+Remaining broader checks:
+
+- Additional physical devices, browser engines, network conditions, and cache-eviction behavior have not been tested; the native worker intervals above cover this Chrome host and persistent profile.
 
 The deliberate download-failure test remains separate from this successful real-network execution. Broader semantic accuracy, complete answers, cross-browser behavior, and physical-device performance remain unproven by a single successful question.

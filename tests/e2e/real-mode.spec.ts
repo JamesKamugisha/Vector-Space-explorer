@@ -5,9 +5,12 @@ import AxeBuilder from "@axe-core/playwright";
 // Real inference and generation require a separate verification with network access.
 test("real embedding mode discloses its models and handles failed downloads without fake results", async ({
   page,
+  context,
 }) => {
+  test.setTimeout(60000);
   let modelRequests = 0;
-  await page.route("https://huggingface.co/**", (route) => {
+  // Model fetches originate in a dedicated worker, so intercept at context scope.
+  await context.route("https://huggingface.co/**", (route) => {
     modelRequests++;
     return route.abort("failed");
   });
