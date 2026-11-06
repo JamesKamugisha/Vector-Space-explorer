@@ -20,6 +20,7 @@ The baseline checks below cover the delivered deterministic math/AI workflows. R
 - Unsupported AI queries could look like ranked results: ranking/retrieval now disabled until recognized features exist.
 - Mobile help icon lost its accessible name: explicit label added.
 - Low contrast helper text and mismatched accessible names: corrected; no accessibility rules disabled.
+- Cold development-worker dependency discovery could invalidate Vite module URLs on first entry into real mode: model dependencies are explicitly prebundled at startup. The fresh-start failure-handling check passes; CI browser tests run against the built production artifact.
 
 ## Observed scene behavior
 
