@@ -6,6 +6,7 @@ export type RealDocument = {
   text: string;
   topic: string;
   color: string;
+  source?: { fileName: string; page?: number; chunk: number };
 };
 export type RealPoint = {
   id: string;
@@ -42,9 +43,15 @@ export type RealState = {
   generatorModel: string;
   dimensions: number;
   contextIds: string[];
+  projection?: "umap" | "pca";
 };
 export type RealRequest =
-  | { id: number; type: "initialize"; count: number }
+  | {
+      id: number;
+      type: "initialize";
+      count: number;
+      documents?: RealDocument[];
+    }
   | { id: number; type: "search" | "generate"; query: string }
   | { id: number; type: "cancel" };
 export type RealResponse = { id: number; patch: Partial<RealState> };

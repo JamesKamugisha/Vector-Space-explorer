@@ -59,8 +59,14 @@ export function ragPrompt(
   results: RealResult[],
 ): { prompt: string; contextIds: string[] } {
   const selected = results.slice(0, 3);
+  const privateContext = selected.some((result) => result.document.source);
   const context = selected
-    .map((result) => result.document.text.split(/\s+/).slice(0, 60).join(" "))
+    .map((result, index) =>
+      result.document.text
+        .split(/\s+/)
+        .slice(0, privateContext ? (index === 0 ? 120 : 50) : 60)
+        .join(" "),
+    )
     .join("\n\n");
   return {
     prompt: `Answer the question using only the following context. If the context does not answer the question, say "The context does not provide that information."\n\nContext:\n${context}\n\nQuestion: ${query.trim().slice(0, 400)}\n\nAnswer:`,

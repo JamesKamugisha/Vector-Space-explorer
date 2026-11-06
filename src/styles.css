@@ -9,12 +9,12 @@
   color: #20344d;
   background: #f3f5f8;
   font-synthesis: none;
-  font-weight: 400;
-  font-size: 14px;
+  font-weight: 450;
+  font-size: 15px;
   line-height: 1.5;
   font-feature-settings: "ss01" on;
   --navy: #122d4e;
-  --muted: #728197;
+  --muted: #455b73;
   --blue: #346fe2;
   --border: #e3e8ef;
 }
@@ -115,7 +115,7 @@ button {
   display: block;
   font-family: "DM Sans", sans-serif;
   letter-spacing: 3.7px;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 500;
   color: #9cb4cd;
   margin-top: 6px;
@@ -137,7 +137,7 @@ button {
   background: transparent;
   color: #b7c8dc;
   padding: 11px 17px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 550;
   white-space: nowrap;
 }
@@ -147,7 +147,7 @@ button {
   box-shadow: 0 1px 3px #0002;
 }
 .new-tag {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.8px;
   font-weight: 700;
   background: #ffffff0e;
@@ -164,7 +164,7 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: 14px;
   color: #a7bbd1;
 }
 .local-badge > span {
@@ -179,7 +179,7 @@ button {
   gap: 7px;
   color: #d8e5f2;
   background: transparent;
-  font-size: 12px;
+  font-size: 14px;
   padding: 8px 0;
 }
 .help-button:hover {
@@ -197,10 +197,10 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.8px;
   font-weight: 700;
-  color: #50667f;
+  color: #40566f;
 }
 .eyebrow > span {
   height: 5px;
@@ -217,23 +217,23 @@ button {
   color: #153452;
 }
 .page-intro p {
-  font-size: 13px;
-  color: #50667f;
+  font-size: 14px;
+  color: #40566f;
   margin: 0;
 }
 .intro-note {
   display: flex;
   gap: 13px;
   align-items: center;
-  color: #50667f;
-  font-size: 11px;
+  color: #40566f;
+  font-size: 14px;
   line-height: 1.7;
   border-left: 1px solid #dce4ed;
   padding-left: 24px;
 }
 .intro-note strong {
   font-weight: 500;
-  color: #50667f;
+  color: #40566f;
 }
 .workspace {
   display: grid;
@@ -258,10 +258,10 @@ button {
   margin-bottom: 25px;
 }
 .section-kicker {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.3px;
   font-weight: 700;
-  color: #50667f;
+  color: #40566f;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -270,9 +270,9 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 12px;
   background: transparent;
-  color: #50667f;
+  color: #40566f;
   padding: 3px;
 }
 .text-button:hover {
@@ -280,10 +280,10 @@ button {
 }
 .field-label {
   display: block;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 9px;
-  color: #53677e;
+  color: #40566f;
 }
 .select-wrapper {
   position: relative;
@@ -293,7 +293,7 @@ button {
   right: 12px;
   top: 15px;
   pointer-events: none;
-  color: #50667f;
+  color: #40566f;
 }
 .select-wrapper select {
   appearance: none;
@@ -303,7 +303,7 @@ button {
   color: #1c3d62;
   background: #f8fafc;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
 }
 .panel-rule {
   height: 1px;
@@ -314,11 +314,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #50667f;
+  color: #40566f;
   margin-bottom: 13px;
 }
 .input-section-heading h2 {
-  font-size: 12px;
+  font-size: 14px;
   color: #3a506b;
   font-weight: 600;
   margin: 0;
@@ -338,15 +338,15 @@ button {
   gap: 7px;
   align-items: center;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
   width: 100%;
   padding: 0;
 }
 .vector-input legend small {
-  font-size: 9px;
+  font-size: 12px;
   margin-left: auto;
   font-weight: 400;
-  color: #50667f;
+  color: #40566f;
 }
 .vector-dot {
   height: 7px;
@@ -359,8 +359,8 @@ button {
   grid-template-columns: repeat(3, 1fr);
   gap: 7px;
   text-align: center;
-  color: #50667f;
-  font-size: 10px;
+  color: #40566f;
+  font-size: 12px;
   margin: 10px 0 4px;
   font-style: italic;
 }
@@ -380,7 +380,7 @@ button {
   padding: 9px 5px;
   text-align: center;
   font-family: "DM Sans", sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
   box-shadow: 0 1px 2px #12345103;
 }
@@ -406,10 +406,10 @@ button {
   margin-bottom: 18px;
 }
 .scalar-row label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   flex: 1;
-  color: #50667f;
+  color: #40566f;
 }
 .scalar-row input {
   display: block;
@@ -419,8 +419,8 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
-  color: #50667f;
+  font-size: 12px;
+  color: #40566f;
   margin: 0;
 }
 .live-dot {
@@ -440,8 +440,8 @@ button {
   justify-content: space-between;
   background: #f6f8fc;
   border: 1px solid #e7edf5;
-  color: #50667f;
-  font-size: 10px;
+  color: #40566f;
+  font-size: 12px;
   padding: 8px 10px;
   text-align: left;
 }
@@ -454,7 +454,7 @@ button {
   margin-top: 27px;
   display: flex;
   gap: 9px;
-  color: #50667f;
+  color: #40566f;
   background: #f8fafc;
   border-radius: 7px;
   padding: 12px 10px;
@@ -462,14 +462,14 @@ button {
 }
 .teaching-note svg {
   flex-shrink: 0;
-  color: #50667f;
+  color: #40566f;
   margin-top: 2px;
 }
 .teaching-note p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
   margin: 0;
-  color: #50667f;
+  color: #40566f;
 }
 .experiment-area {
   min-width: 0;
@@ -484,16 +484,16 @@ button {
 .experiment-meta {
   display: flex;
   gap: 8px;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 1.1px;
-  color: #50667f;
+  color: #40566f;
 }
 .experiment-meta > span:first-child {
-  color: #50667f;
+  color: #40566f;
 }
 .meta-divider {
-  color: #50667f;
+  color: #40566f;
 }
 .experiment-header h2 {
   font-family: Manrope, sans-serif;
@@ -504,9 +504,9 @@ button {
   margin: 6px 0;
 }
 .experiment-header p {
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.6;
-  color: #50667f;
+  color: #40566f;
   margin: 0;
 }
 .dimension-badge {
@@ -515,8 +515,8 @@ button {
   gap: 6px;
   border: 1px solid #dae3ec;
   background: #edf2f7;
-  color: #50667f;
-  font-size: 8px;
+  color: #40566f;
+  font-size: 12px;
   letter-spacing: 1px;
   font-weight: 600;
   border-radius: 5px;
@@ -546,8 +546,8 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #9bb0c9;
-  font-size: 10px;
+  color: #b6cae2;
+  font-size: 12px;
   letter-spacing: 0.2px;
 }
 .scene-live-dot {
@@ -595,8 +595,8 @@ button {
   display: flex;
   gap: 19px;
   pointer-events: none;
-  font-size: 9px;
-  color: #9db0c9;
+  font-size: 12px;
+  color: #b6cae2;
   z-index: 3;
 }
 .scene-legend > span {
@@ -611,8 +611,8 @@ button {
   box-shadow: 0 0 7px #ffffff15;
 }
 .scene-legend .legend-caption {
-  color: #7790ac;
-  font-size: 8px;
+  color: #b1c6df;
+  font-size: 12px;
 }
 .scene-bottom-bar {
   height: 37px;
@@ -629,8 +629,8 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #7891ae;
-  font-size: 9px;
+  color: #b1c6df;
+  font-size: 12px;
 }
 .interaction-separator {
   padding: 0 5px;
@@ -641,8 +641,8 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #9db1ca;
-  font-size: 9px;
+  color: #b6cae2;
+  font-size: 12px;
   padding: 4px;
 }
 .scene-bottom-bar button:hover {
@@ -659,8 +659,8 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #50667f;
-  font-size: 9px;
+  color: #40566f;
+  font-size: 12px;
 }
 .layer-bar > div {
   display: flex;
@@ -673,15 +673,15 @@ button {
   gap: 5px;
   background: #edf1f6;
   border: 1px solid #e0e7ef;
-  color: #50667f;
-  font-size: 9px;
+  color: #40566f;
+  font-size: 12px;
   padding: 5px 8px;
   font-weight: 500;
 }
 .layer-toggle.is-on {
   background: #edf3fe;
   border-color: #d7e3f7;
-  color: #50667f;
+  color: #40566f;
 }
 .empty-check {
   width: 13px;
@@ -718,8 +718,8 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #50667f;
-  font-size: 8px;
+  color: #40566f;
+  font-size: 12px;
   letter-spacing: 1.2px;
   font-weight: 700;
 }
@@ -731,17 +731,17 @@ button {
 }
 .result-card-heading button {
   background: transparent;
-  color: #50667f;
+  color: #40566f;
   padding: 3px;
   display: flex;
 }
 .result-card-heading button:hover {
-  color: #50667f;
+  color: #40566f;
 }
 .result-equation {
   font-family: "DM Sans", sans-serif;
-  font-size: 13px;
-  color: #50667f;
+  font-size: 14px;
+  color: #40566f;
   line-height: 1.8;
   margin: 18px 0 7px;
   overflow-wrap: anywhere;
@@ -764,29 +764,29 @@ button {
   gap: 9px;
 }
 .concept > svg {
-  color: #50667f;
+  color: #40566f;
   flex-shrink: 0;
   margin-top: 1px;
 }
 .concept h3 {
   margin: 0 0 5px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
-  color: #50667f;
+  color: #40566f;
 }
 .concept p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
-  color: #50667f;
+  color: #40566f;
   margin: 0;
 }
 .warning {
   padding: 10px;
   background: #fff4eb;
-  color: #50667f;
+  color: #40566f;
   border: 1px solid #f0ddcc;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 14px;
 }
 .steps-card {
   padding: 19px 20px 10px;
@@ -803,7 +803,7 @@ button {
 .steps-icon {
   font-size: 20px;
   line-height: 12px;
-  color: #50667f;
+  color: #40566f;
 }
 .play-button {
   display: flex;
@@ -811,9 +811,9 @@ button {
   gap: 6px;
   background: #edf3fe;
   border: 1px solid #dee9fb;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
-  color: #50667f;
+  color: #40566f;
   padding: 6px 9px;
 }
 .play-button:hover,
@@ -836,10 +836,10 @@ button {
   width: 100%;
   background: transparent;
   text-align: left;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
   padding: 3px 2px;
-  color: #50667f;
+  color: #40566f;
 }
 .steps-list li button:hover {
   background: #f6f8fc;
@@ -852,13 +852,13 @@ button {
   width: 19px;
   height: 19px;
   border-radius: 50%;
-  font-size: 8px;
+  font-size: 12px;
   background: #f8fafc;
-  color: #50667f;
+  color: #40566f;
   margin-top: 0;
 }
 .steps-list li.active-step button {
-  color: #50667f;
+  color: #40566f;
   background: #f3f7ff;
 }
 .active-step .step-number {
@@ -872,8 +872,8 @@ button {
   align-items: center;
   padding-top: 7px;
   border-top: 1px solid #f0f3f7;
-  color: #50667f;
-  font-size: 8px;
+  color: #40566f;
+  font-size: 12px;
 }
 .step-footer > div {
   display: flex;
@@ -882,7 +882,7 @@ button {
 .step-footer button {
   display: flex;
   background: #f4f7fa;
-  color: #50667f;
+  color: #40566f;
   padding: 3px;
 }
 .page-footer {
@@ -892,8 +892,8 @@ button {
   justify-content: space-between;
   gap: 16px;
   padding: 28px 46px 26px;
-  color: #50667f;
-  font-size: 9px;
+  color: #40566f;
+  font-size: 12px;
 }
 .page-footer > span {
   display: flex;
@@ -902,11 +902,11 @@ button {
 }
 .footer-dot {
   margin: 0 4px;
-  color: #50667f;
+  color: #40566f;
 }
 .footer-arrow {
   transform: rotate(-45deg);
-  color: #50667f;
+  color: #40566f;
   margin-left: 3px;
 }
 .matrix-editor {
@@ -926,7 +926,7 @@ button {
   font-size: 75px;
   font-weight: 200;
   line-height: 1.7;
-  color: #50667f;
+  color: #40566f;
   font-family: serif;
 }
 .ai-explainer {
@@ -940,7 +940,7 @@ button {
 }
 .ai-explainer-icon {
   background: #eef5fc;
-  color: #50667f;
+  color: #40566f;
   display: grid;
   place-items: center;
   width: 49px;
@@ -950,14 +950,14 @@ button {
 }
 .ai-explainer h3 {
   font-family: Manrope, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   margin: 0 0 6px;
   color: #345372;
 }
 .ai-explainer p {
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.8;
-  color: #50667f;
+  color: #40566f;
   margin: 0;
   max-width: 590px;
 }
@@ -968,8 +968,8 @@ button {
   border: 1px solid #e1e9f0;
   border-radius: 4px;
   padding: 5px 8px;
-  font-size: 8px;
-  color: #50667f;
+  font-size: 12px;
+  color: #40566f;
   letter-spacing: 0.7px;
 }
 .skip-link {
@@ -1000,7 +1000,7 @@ button {
   position: absolute;
   top: 15px;
   right: 15px;
-  color: #50667f;
+  color: #40566f;
   background: #f1f5f9;
   display: flex;
   padding: 5px;
@@ -1013,8 +1013,8 @@ button {
   margin: 13px 0;
 }
 .help-dialog > p {
-  font-size: 13px;
-  color: #50667f;
+  font-size: 14px;
+  color: #40566f;
   line-height: 1.8;
 }
 .help-items {
@@ -1026,25 +1026,25 @@ button {
 .help-items > div {
   display: flex;
   gap: 15px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
-  color: #50667f;
+  color: #40566f;
 }
 .help-items svg {
   width: 19px;
   flex-shrink: 0;
-  color: #50667f;
+  color: #40566f;
   margin-top: 2px;
 }
 .help-items strong {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   color: #426080;
   font-weight: 600;
   margin-bottom: 2px;
 }
 .help-dialog > .help-fine-print {
-  font-size: 10px;
+  font-size: 12px;
   padding: 12px;
   background: #f5f8fb;
   border-radius: 7px;
@@ -1059,7 +1059,7 @@ button {
   gap: 15px;
   margin-top: 22px;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
 }
 .primary-button:hover {
   background: #235cae;
@@ -1200,7 +1200,7 @@ button {
     gap: 4px;
   }
   .section-kicker {
-    font-size: 8px;
+    font-size: 12px;
     letter-spacing: 0.8px;
   }
   .scene-viewport {
@@ -1210,13 +1210,13 @@ button {
     font-size: 21px;
   }
   .experiment-header p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .experiment-meta {
     font-size: 7px;
   }
   .scene-bottom-bar > span {
-    font-size: 8px;
+    font-size: 12px;
   }
   .scene-bottom-bar .interaction-separator {
     padding: 0 1px;
@@ -1237,7 +1237,7 @@ button {
   }
   .layer-toggle {
     padding: 5px;
-    font-size: 8px;
+    font-size: 12px;
   }
   .page-footer {
     padding: 24px 22px;
@@ -1253,7 +1253,7 @@ button {
   }
   .scene-legend {
     gap: 10px;
-    font-size: 8px;
+    font-size: 12px;
   }
   .ai-explainer {
     padding: 17px;
@@ -1303,7 +1303,7 @@ button {
     gap: 12px;
   }
   .input-hint {
-    font-size: 9px;
+    font-size: 12px;
     margin-top: 10px;
   }
   .page-intro {
@@ -1313,7 +1313,7 @@ button {
     font-size: 23px;
   }
   .page-intro p {
-    font-size: 12px;
+    font-size: 14px;
   }
   .experiment-area {
     width: 100%;
@@ -1328,20 +1328,20 @@ button {
     font-size: 24px;
   }
   .experiment-header p {
-    font-size: 11px;
+    font-size: 14px;
   }
   .experiment-meta {
-    font-size: 8px;
+    font-size: 12px;
   }
   .scene-legend {
-    font-size: 9px;
+    font-size: 12px;
     gap: 17px;
   }
   .scene-bottom-bar > span {
-    font-size: 8px;
+    font-size: 12px;
   }
   .scene-bottom-bar > button {
-    font-size: 9px;
+    font-size: 12px;
     gap: 4px;
   }
   .layer-bar {
@@ -1350,14 +1350,14 @@ button {
     margin-bottom: 17px;
   }
   .layer-bar > span {
-    font-size: 8px;
+    font-size: 12px;
   }
   .layer-bar > div {
     gap: 4px;
     justify-content: flex-end;
   }
   .layer-toggle {
-    font-size: 8px;
+    font-size: 12px;
     padding: 5px;
   }
   .layer-toggle svg {
@@ -1377,14 +1377,14 @@ button {
     font-size: 26px;
   }
   .result-equation {
-    font-size: 14px;
+    font-size: 15px;
   }
   .concept p,
   .steps-list li button {
-    font-size: 12px;
+    font-size: 14px;
   }
   .concept h3 {
-    font-size: 11px;
+    font-size: 14px;
   }
   .steps-list {
     gap: 8px;
@@ -1395,16 +1395,16 @@ button {
   .step-number {
     width: 21px;
     height: 21px;
-    font-size: 9px;
+    font-size: 12px;
   }
   .section-kicker {
-    font-size: 9px;
+    font-size: 12px;
   }
   .help-dialog {
     padding: 28px 23px;
   }
   .ai-explainer p {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 .new-tag {
@@ -1447,7 +1447,7 @@ button {
 .field-label,
 .vector-input legend,
 .input-section-heading h2 {
-  font-size: 13px;
+  font-size: 14px;
 }
 .coordinate-inputs input,
 .scalar-row input,
@@ -1455,58 +1455,61 @@ button {
   font-size: 15px;
 }
 .select-wrapper select {
-  font-size: 13px;
+  font-size: 14px;
 }
 .result-equation {
   font-size: 15px;
 }
 .concept h3 {
-  font-size: 12px;
+  font-size: 14px;
 }
 .concept p {
-  font-size: 13px;
+  font-size: 14px;
 }
 .steps-list li button {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.75;
 }
 .step-number {
   width: 21px;
   height: 21px;
-  font-size: 10px;
-}
-.step-footer {
-  font-size: 10px;
-}
-.experiment-header p {
   font-size: 12px;
 }
+.step-footer {
+  font-size: 12px;
+}
+.experiment-header p {
+  font-size: 14px;
+}
 .page-footer {
-  font-size: 10px;
+  font-size: 12px;
 }
 .help-dialog > p,
 .help-items > div,
 .help-items strong {
-  color: #50667f;
+  color: #40566f;
 }
 .help-dialog > .help-fine-print {
-  color: #50667f;
+  color: #40566f;
 }
 
 .mobile-controls-toggle {
   display: none;
 }
 .ai-view-switch {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
-  flex-wrap: wrap;
   padding: 16px 16px 0;
 }
 .ai-view-switch button {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.4;
   background: #f2f6fc;
-  color: #50667f;
+  color: #40566f;
   border: 1px solid #dbe5f2;
-  font-size: 11px;
+  font-size: 14px;
   padding: 7px 8px;
 }
 .ai-view-switch button[aria-pressed="true"] {
@@ -1531,9 +1534,9 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
-  color: #50667f;
+  color: #40566f;
   font-weight: 600;
 }
 .vector-detail-heading select {
@@ -1542,7 +1545,7 @@ button {
   background: #f8fafc;
   color: #365675;
   padding: 6px 9px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .vector-details dl {
   display: grid;
@@ -1551,20 +1554,20 @@ button {
   margin: 15px 0 9px;
 }
 .vector-details dt {
-  font-size: 11px;
+  font-size: 14px;
   color: #536b85;
 }
 .vector-details dd {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 15px;
   color: #254c72;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .vector-details > p {
   margin: 8px 0 0;
-  font-size: 11px;
-  color: #50667f;
+  font-size: 14px;
+  color: #40566f;
   line-height: 1.7;
 }
 .domain-example {
@@ -1586,7 +1589,7 @@ button {
 }
 .analogy-lesson p,
 .analogy-lesson li {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.8;
 }
 .analogy-lesson label {
@@ -1607,7 +1610,7 @@ button {
   border-radius: 7px;
   margin: 20px 0;
   padding: 14px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .analogy-equation strong {
   display: block;
@@ -1621,7 +1624,7 @@ button {
   gap: 8px;
   border-bottom: 1px solid #e3eaf2;
   padding: 7px 0;
-  font-size: 12px;
+  font-size: 14px;
 }
 .analogy-lesson dd {
   margin: 0;
@@ -1670,8 +1673,8 @@ button {
   color: #234666;
 }
 .instructions-title > p {
-  font-size: 12px;
-  color: #50667f;
+  font-size: 14px;
+  color: #40566f;
   line-height: 1.8;
   margin: 0;
 }
@@ -1685,7 +1688,7 @@ button {
   flex-wrap: wrap;
 }
 .instructions-panel .steps-list li button {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.85;
   gap: 9px;
   padding: 5px 0;
@@ -1694,7 +1697,7 @@ button {
   gap: 9px;
 }
 .instructions-panel .step-footer {
-  font-size: 9px;
+  font-size: 12px;
 }
 .instruction-list {
   list-style: none;
@@ -1706,8 +1709,8 @@ button {
 .instruction-list li {
   display: flex;
   gap: 9px;
-  font-size: 13px;
-  color: #4a627c;
+  font-size: 14px;
+  color: #3f566f;
   line-height: 1.85;
 }
 .instruction-list .step-number {
@@ -1723,14 +1726,14 @@ button {
   display: flex;
   gap: 7px;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #385a7c;
   margin: 0 0 9px;
 }
 .instructions-tips p {
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.9;
-  color: #50667f;
+  color: #40566f;
 }
 .instructions-tips p:last-child {
   border-top: 1px solid #e1e8f1;
@@ -1777,7 +1780,7 @@ button {
   }
 }
 .select-wrapper select {
-  font-size: 14px;
+  font-size: 15px;
 }
 .steps-list li button {
   font-size: 15px;
@@ -1786,7 +1789,7 @@ button {
   font-size: 15px;
 }
 .concept h3 {
-  font-size: 13px;
+  font-size: 14px;
 }
 @media (max-width: 900px) {
   .workspace {
@@ -1823,13 +1826,13 @@ button {
     padding: 11px 12px;
     margin-bottom: 18px;
     border: 1px solid #dce6f1;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     text-align: left;
   }
   .mobile-controls-toggle > span:nth-of-type(2) {
     margin-left: auto;
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 400;
   }
   .controls-collapsed .lab-controls-content {
@@ -1841,6 +1844,11 @@ button {
   .ai-workspace .mobile-controls-toggle {
     width: calc(100% - 32px);
     margin: 16px;
+  }
+  .control-panel input,
+  .control-panel textarea,
+  .control-panel select {
+    font-size: 16px;
   }
   .controls-collapsed .mobile-controls-toggle > svg:last-child {
     transform: rotate(-90deg);
@@ -1879,10 +1887,10 @@ button {
   font-size: 15px;
 }
 .ai-panel .ai-document-info strong {
-  font-size: 14px;
+  font-size: 15px;
 }
 .ai-panel .ai-score {
-  font-size: 14px;
+  font-size: 15px;
 }
 .ai-learning-path {
   display: flex;
@@ -1891,7 +1899,7 @@ button {
   gap: 7px;
   margin: -2px 0 15px;
   color: #496580;
-  font-size: 11px;
+  font-size: 14px;
 }
 .ai-learning-path > span {
   display: flex;
@@ -1907,7 +1915,7 @@ button {
   border-radius: 50%;
   width: 18px;
   height: 18px;
-  font-size: 9px;
+  font-size: 12px;
 }
 .ai-learning-path svg {
   color: #7d94ac;
@@ -1941,12 +1949,12 @@ button {
   color: #e2ecfa;
 }
 .real-scene-loading span {
-  font-size: 13px;
+  font-size: 14px;
   max-width: 370px;
   line-height: 1.7;
 }
 .real-scene-loading small {
-  font-size: 11px;
+  font-size: 14px;
   color: #a2b9d9;
 }
 .real-topic-legend {
@@ -1960,9 +1968,12 @@ button {
   border: 1px solid #233955;
   border-radius: 8px;
   color: #c4d4e9;
-  font-size: 12px;
+  font-size: 14px;
 }
 .real-topic-legend > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -2002,6 +2013,6 @@ button {
   }
   .real-workspace .scene-mode {
     max-width: 70%;
-    font-size: 9px;
+    font-size: 12px;
   }
 }

@@ -45,6 +45,9 @@ import AnalogyLesson, {
 } from "./components/AnalogyLesson";
 import RealPanel from "./real/RealPanel";
 import { useRealEmbeddings } from "./real/useRealEmbeddings";
+import DocumentUpload from "./real/DocumentUpload";
+import type { ImportedFileSummary } from "./real/importDocuments";
+import type { RealDocument } from "./real/types";
 
 type Scenario = "math" | "ai";
 const ZERO: Vec3 = [0, 0, 0];
@@ -327,8 +330,12 @@ export default function App() {
   );
   const [realSelectedId, setRealSelectedId] = useState("");
   const [showClusterConnections, setShowClusterConnections] = useState(true);
+  const [importedDocuments, setImportedDocuments] = useState<
+    RealDocument[] | null
+  >(null);
+  const [importedFiles, setImportedFiles] = useState<ImportedFileSummary[]>([]);
   const isReal = scenario === "ai" && aiView === "real";
-  const real = useRealEmbeddings(pointCount, isReal);
+  const real = useRealEmbeddings(pointCount, isReal, importedDocuments);
   const realScenePoints = useMemo(() => {
     const scores = new Map(
       real.state.results.map(({ document, score }) => [document.id, score]),
@@ -890,6 +897,27 @@ export default function App() {
                     onPointCountChange={setPointCount}
                     selectedId={realSelectedId}
                     onSelect={setRealSelectedId}
+                    uploadedCount={importedDocuments?.length}
+                    uploadControls={
+                      <DocumentUpload
+                        importedDocuments={importedDocuments}
+                        importedFiles={importedFiles}
+                        onImport={(documents, files) => {
+                          setImportedDocuments(documents);
+                          setImportedFiles(files);
+                          setPointCount(documents.length);
+                          setRealQuery("");
+                          setRealSelectedId("");
+                        }}
+                        onUseSamples={() => {
+                          setImportedDocuments(null);
+                          setImportedFiles([]);
+                          setPointCount(120);
+                          setRealQuery("How do birds use feathers to fly?");
+                          setRealSelectedId("");
+                        }}
+                      />
+                    }
                   />
                 ) : aiView === "pca" ? (
                   <PcaLesson
@@ -999,7 +1027,7 @@ export default function App() {
                 {scenario === "math"
                   ? "Free 3D space"
                   : isReal
-                    ? "UMAP projection · real 384D text embeddings"
+                    ? `${real.state.projection === "pca" ? "PCA · small corpus" : "UMAP projection"} · real 384D text embeddings`
                     : isPca
                       ? "PCA projection · approximate visualization"
                       : isAnalogy
@@ -1133,8 +1161,8 @@ export default function App() {
                     Query
                   </span>
                   <span className="legend-caption">
-                    Real text embeddings · {real.state.points.length} documents
-                    · 384 dimensions
+                    Real text embeddings · {real.state.points.length}{" "}
+                    {importedDocuments ? "chunks" : "documents"}· 384 dimensions
                   </span>
                 </>
               ) : scenario === "math" ? (
@@ -1324,7 +1352,11 @@ export default function App() {
                 </h3>
                 <p>
                   {isReal ? (
-                    "The trained sentence model embeds a bundled sample corpus. Colors indicate document topics; UMAP positions are computed from the learned vectors without using those labels. Retrieval uses full 384-dimensional cosine similarity, and the answer model reads only the retrieved context supplied to it."
+                    importedDocuments ? (
+                      "Each point represents a chunk extracted from your files. Colors identify source files; the projection is computed from actual 384-dimensional embeddings. Search and RAG use the selected number of chunks. File, page, and chunk references let you check retrieved context. Fewer than eight chunks use a centered PCA view instead of UMAP."
+                    ) : (
+                      "The trained sentence model embeds a bundled sample corpus. Colors indicate document topics; UMAP positions are computed from the learned vectors without using those labels. Retrieval uses full 384-dimensional cosine similarity, and the answer model reads only the retrieved context supplied to it."
+                    )
                   ) : isPca ? (
                     "This local PCA lesson computes a three-dimensional view of synthetic four-dimensional vectors. Original-space rankings and projected scores are shown separately: centering and dropping a component can change angles, distances, and neighbors."
                   ) : (
@@ -1452,10 +1484,15 @@ export default function App() {
               <ol className="instruction-list">
                 {(isReal
                   ? [
+                      "Upload your PDF or text files in the left panel, or explore the samples. Files are read locally; scanned PDFs need OCR before import.",
                       "Allow the trained sentence model to load. Public model files download on first use and are cached by your browser.",
-                      "Set the number of documents from 8 to 500. Each point represents an actual model embedding of a sample passage.",
+                      importedDocuments
+                        ? `Each point is an uploaded text chunk. Set how many to include, from 1 to ${importedDocuments.length}. Search and RAG use only the included chunks; increase the count to search more.`
+                        : "Set the number of documents from 8 to 500. Each point represents an actual model embedding of a sample passage.",
                       "Type a natural-language question and choose Semantic search. Similarity is calculated across all 384 dimensions, not from the 3D picture.",
-                      "Select a ranked document or click a point. Colors describe topics; the computed UMAP projection may distort distances between clusters.",
+                      importedDocuments
+                        ? "Click a point or ranked result to inspect its text, filename, PDF page, and chunk. Colors identify files. Small corpora use PCA; larger ones use UMAP. Projected distances are approximate."
+                        : "Select a ranked document or click a point. Colors describe topics; the computed UMAP projection may distort distances between clusters.",
                       "Choose Generate grounded answer. The local language model loads on demand and receives the top retrieved passages as context.",
                       "Read the source cards alongside the generated answer. The compact local model can make mistakes; citations identify the supplied context, not a guarantee of every claim.",
                     ]
@@ -1509,7 +1546,7 @@ export default function App() {
             </p>
             <p>
               {isReal
-                ? "Cluster positions are an approximate UMAP projection. Scores use the original learned vectors. Glowing particles are a display style, not fabricated similarity data."
+                ? `Positions are an approximate ${real.state.projection === "pca" ? "PCA view for a small corpus" : "UMAP projection"}. Scores use all 384 learned dimensions. ${importedDocuments ? "Return to samples to clear the imported corpus, or reload the page. Imported text and vectors are not saved automatically." : "Upload PDF or text files to explore your own material."}`
                 : isPca
                   ? "The PCA plot is approximate. Its visible distances and angles can differ from the original scores."
                   : "The unit sphere has radius 1. It is a reference surface; vectors can extend beyond it."}

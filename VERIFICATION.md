@@ -44,13 +44,13 @@ The local checklist is intentionally excluded from the public repository togethe
 
 ## Real-model implementation and verification
 
-The current local verification run passes 46 unit tests and 29 browser tests, plus production build, TypeScript, ESLint, Prettier, and the production dependency audit with zero vulnerabilities reported. The historical 40-unit/28-browser baseline above is retained for comparison.
+The pre-upload real-model verification run passed 46 unit tests and 29 browser tests, plus production build, TypeScript, ESLint, Prettier, and the production dependency audit with zero vulnerabilities reported. The historical 40-unit/28-browser baseline above is retained for comparison. The expanded upload release's checks are recorded below.
 
 Real embeddings mode implements a separate browser-worker pipeline: quantized `Xenova/all-MiniLM-L6-v2` mean-pooled normalized 384-dimensional text embeddings, an unsupervised seeded UMAP projection into three display dimensions, original-dimensional cosine retrieval and distance calculations, and lazy `Xenova/flan-t5-small` answer generation. The corpus contains up to 500 authored sample passages composed from facts and practical contexts across Cats, Dogs, Cars, Faces, Chairs, and Birds. Topic labels supply colors only; they do not supply projection positions. These are text embeddings, not image embeddings.
 
 The generator receives context from the top three retrieved passages. Source buttons identify the supplied context IDs. They do not establish that the model correctly grounded each claim or generated its own faithful citations. Small-model factual accuracy, answer completeness, and semantic quality require inspection beyond successful execution.
 
-Both models run locally through browser WebAssembly after public model downloads. Browser model caching and a versioned IndexedDB document-embedding cache support reuse when available. No paid API key or server inference service is required. First downloads and available browser memory can affect loading, encoding, UMAP projection, and generation; the earlier 500-point rendering profile does not measure these stages.
+Both models run locally through browser WebAssembly after public model downloads. Browser model caching and a versioned IndexedDB cache for public sample embeddings support reuse when available. Imported private text and embeddings instead remain in memory and are not automatically persisted in that cache. No paid API key or server inference service is required. First downloads and available browser memory can affect loading, encoding, projection, and generation; the earlier 500-point rendering profile does not measure these stages.
 
 Completed verification for the real-mode interface:
 
@@ -91,3 +91,30 @@ Remaining broader checks:
 - Additional physical devices, browser engines, network conditions, and cache-eviction behavior have not been tested; the native worker intervals above cover this Chrome host and persistent profile.
 
 The deliberate download-failure test remains separate from this successful real-network execution. Broader semantic accuracy, complete answers, cross-browser behavior, and physical-device performance remain unproven by a single successful question.
+
+## Private document import addition
+
+The upload extension implements local PDF/TXT/Markdown parsing, bounded overlapping chunks, per-file colors, filename/PDF-page/chunk provenance, and atomic replacement of the sample corpus. Uploaded text and vectors are kept in browser memory rather than the public-sample IndexedDB cache. Returning to samples or reloading discards the active imported corpus. There is no server upload of the document content.
+
+Limits are 10 files, 10 MB each, 30 MB total, 200 pages per PDF, and 500 chunks total. Empty/image-only PDFs report the absence of extractable text and the lack of OCR support; malformed or password-protected PDFs produce actionable errors. Extracted page references provide provenance, not preserved PDF layout, table fidelity, or guaranteed reading order.
+
+Imported point counts run from one to the actual chunk count. The selected prefix is both the plotted corpus and the retrieval/generation scope; no sample padding or fabricated duplicate points are added. Fewer than eight included chunks use centered PCA, while eight or more use UMAP. Scores remain original-dimensional in both cases. Small or rank-deficient corpora can occupy fewer than three display dimensions.
+
+Completed checks for this addition:
+
+- Eight parser unit tests pass in `tests/import-documents.test.ts`, covering normalization/chunking bounds and source handling, invalid/limited imports, cancellation, and warnings without silently invented chunks.
+- Three Chrome tests pass in `tests/e2e/document-upload.spec.ts`. They run actual PDF.js text extraction on a minimal PDF, plus TXT/Markdown parsing; confirm two real files produce two chunks; verify source filename/page summaries, sample restoration, blank/malformed PDF and oversized-file errors, and retention of the prior corpus after a failed replacement.
+- Automated WCAG A/AA checks of the uploader's successful-import and error states report zero violations. These upload tests deliberately block Hugging Face downloads: parsing is real, but successful model inference is not asserted by these tests.
+
+The separate local network-enabled uploaded-document flow also passed, recorded in ignored `artifacts/upload-verification.json`:
+
+- A TXT file produced one real chunk, a PDF produced two, two PDFs produced five, and a longer PDF produced twenty. Point counts and finite scene positions matched exactly; requesting 500 points clipped to each corpus's actual size instead of adding sample or duplicate points. Small-corpus PCA and the twenty-point UMAP path both ran against actual MiniLM vectors.
+- A 384-dimensional hydrogen-fuel query retrieved the imported research-station passage. The twenty-chunk result scored approximately 0.6846. Actual FLAN-T5 generation answered “hydrogen” for the one- and twenty-chunk corpora, with the imported filename/page/chunk references identifying the supplied context.
+- Clicking another cloud point selected page 2 of the imported PDF with correct source attribution. The 390px mobile view had no horizontal overflow, and returning to samples restored 120 sample points.
+- Public-sample IndexedDB keys remained unchanged, with 500 cached public vectors before and after private-document work. No request containing the imported content was observed, no page errors occurred, and automated WCAG A/AA checks in the actual successful upload/model state reported zero violations.
+
+The expanded local unit suite passes 62 tests, and the clean full browser run passes all 32 cases after the final typography and two-column experiment-tab refinements. Production build, strict TypeScript, ESLint, and formatting checks pass; the production dependency audit reports zero vulnerabilities. The local verification gate is complete. The separate deployed release and remote production-build CI gate remains below.
+
+The final typography pass uses 15px body text, 14px helper copy, labels of at least 12px, darker slate interface text, and brighter canvas labels. Desktop and 390px mobile screenshots were reviewed for readability. The compact imported state keeps the chunk/file summary and sample-restoration action visible while file replacement, provenance summaries, and privacy details remain under Manage imported files. Its three parser/accessibility browser tests pass after the layout/font changes; the mobile screenshot has no horizontal overflow. Legibility takes priority over keeping every control above the fold, and desktop controls remain scrollable.
+
+Reproduce the actual imported-model flow with `npm run verify:upload` against the running local server on port 5174; set `UPLOAD_TEST_BASE_URL` for a deployment. Uploaded-document deployment verification and its clean full production-build CI run remain pending. These local successes do not replace that release check or establish general document-answer accuracy.

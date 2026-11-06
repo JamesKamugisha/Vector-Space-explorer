@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { RealState } from "./types";
 import "./real.css";
 
@@ -13,6 +13,8 @@ export type RealPanelProps = {
   onPointCountChange: (count: number) => void;
   selectedId: string;
   onSelect: (id: string) => void;
+  uploadedCount?: number;
+  uploadControls?: ReactNode;
 };
 
 const presets = [
@@ -23,8 +25,6 @@ const presets = [
   { label: "Chairs", query: "What makes an office chair ergonomic?" },
   { label: "Birds", query: "Why do birds migrate?" },
 ];
-const boundedCount = (value: number) =>
-  Number.isFinite(value) ? Math.max(8, Math.min(500, Math.floor(value))) : 8;
 const modelUrl = (model: string) =>
   `https://huggingface.co/${model.split("/").map(encodeURIComponent).join("/")}`;
 
@@ -39,7 +39,16 @@ export default function RealPanel({
   onPointCountChange,
   selectedId,
   onSelect,
+  uploadedCount,
+  uploadControls,
 }: RealPanelProps) {
+  const isUploaded = uploadedCount !== undefined;
+  const minCount = isUploaded ? 1 : 8;
+  const maxCount = uploadedCount ?? 500;
+  const clampCount = (value: number) =>
+    Number.isFinite(value)
+      ? Math.max(minCount, Math.min(maxCount, Math.floor(value)))
+      : minCount;
   const [countText, setCountText] = useState(String(pointCount));
   const [showAll, setShowAll] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState("");
@@ -67,7 +76,7 @@ export default function RealPanel({
     state.results.length > 0 &&
     searchedQuery !== "" &&
     searchedQuery.trim() !== query.trim();
-  const pendingCount = boundedCount(Number(countText)) !== pointCount;
+  const pendingCount = clampCount(Number(countText)) !== pointCount;
   const search = () => {
     if (ready && query.trim() && !pendingCount) {
       setSubmittedQuery(query.trim());
@@ -75,7 +84,7 @@ export default function RealPanel({
     }
   };
   const applyCount = () => {
-    const count = boundedCount(Number(countText));
+    const count = clampCount(Number(countText));
     setCountText(String(count));
     if (count !== pointCount) onPointCountChange(count);
   };
@@ -92,15 +101,20 @@ export default function RealPanel({
         </div>
         <h3>Search a learned space.</h3>
         <p>
-          Search sample text with a trained {state.dimensions || 384}D model.
-          Explore meaning in a computed 3D map.
+          Search {isUploaded ? "your documents" : "sample text"} with a trained{" "}
+          {state.dimensions || 384}D model. Explore meaning in a computed 3D
+          map.
         </p>
         <details className="real-disclosure">
-          <summary>Sample text, not image embeddings</summary>
+          <summary>
+            {isUploaded
+              ? "Your text, split into searchable chunks"
+              : "Sample text, not image embeddings"}
+          </summary>
           <p>
-            These are text passages about cats, dogs, cars, faces, chairs, and
-            birds. Topic colors are known labels; the model computes the
-            positions.
+            {isUploaded
+              ? "Each point represents an extracted text chunk. Colors identify source files; positions are computed from their actual embeddings. Files and private vectors stay in this session."
+              : "These are text passages about cats, dogs, cars, faces, chairs, and birds. Topic colors are known labels; the model computes the positions."}
           </p>
           <div className="real-topics">
             {topics.map(([topic, color]) => (
@@ -113,19 +127,23 @@ export default function RealPanel({
         </details>
       </div>
 
+      {uploadControls}
+
       <div className="real-section real-point-section">
         <div className="real-heading">
           <label htmlFor="real-point-count" className="real-eyebrow">
             NUMBER OF POINTS
           </label>
-          <span className="real-help">8–500</span>
+          <span className="real-help">
+            {minCount}–{maxCount}
+          </span>
         </div>
         <div className="real-count-row">
           <input
             id="real-point-count"
             type="number"
-            min={8}
-            max={500}
+            min={minCount}
+            max={maxCount}
             step={1}
             value={countText}
             onChange={(event) => setCountText(event.target.value)}
@@ -136,8 +154,8 @@ export default function RealPanel({
           />
           <button
             type="button"
-            disabled={pointCount >= 500}
-            onClick={() => onPointCountChange(boundedCount(pointCount + 25))}
+            disabled={pointCount >= maxCount}
+            onClick={() => onPointCountChange(clampCount(pointCount + 25))}
           >
             +25 points
           </button>
@@ -146,7 +164,12 @@ export default function RealPanel({
           className="real-count-presets"
           aria-label="Real embedding point count presets"
         >
-          {[8, 50, 100, 500].map((count) => (
+          {(isUploaded
+            ? [...new Set([1, 5, 25, maxCount])]
+                .filter((count) => count <= maxCount)
+                .sort((a, b) => a - b)
+            : [8, 50, 100, 500]
+          ).map((count) => (
             <button
               type="button"
               key={count}
@@ -160,7 +183,9 @@ export default function RealPanel({
         <p className="real-help">
           {pendingCount
             ? "Press Enter or leave the field to apply this point count."
-            : `${pointCount} sample text passages. Changing this recomputes embeddings and the 3D map.`}
+            : isUploaded
+              ? `Showing ${pointCount} of ${uploadedCount} uploaded chunks. Search and RAG use only these visible chunks. Increase the count to include more.`
+              : `${pointCount} sample text passages. Changing this recomputes embeddings and the 3D map.`}
         </p>
       </div>
 
@@ -185,18 +210,24 @@ export default function RealPanel({
           }}
           placeholder="For example: why do birds travel seasonally?"
         />
-        <div className="real-query-presets" aria-label="Semantic query presets">
-          {presets.map((preset) => (
-            <button
-              type="button"
-              key={preset.label}
-              onClick={() => onQueryChange(preset.query)}
-              className={query === preset.query ? "active" : ""}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
+        {!isUploaded && (
+          <div
+            className="real-query-presets"
+            role="group"
+            aria-label="Semantic query presets"
+          >
+            {presets.map((preset) => (
+              <button
+                type="button"
+                key={preset.label}
+                onClick={() => onQueryChange(preset.query)}
+                className={query === preset.query ? "active" : ""}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        )}
         <button
           type="button"
           className="real-search-button"
@@ -366,6 +397,15 @@ export default function RealPanel({
               <span>{selected.topic}</span>
               <code>[{selected.id}]</code>
             </div>
+            {selected.source && (
+              <p className="real-help">
+                Source: {selected.source.fileName}
+                {selected.source.page
+                  ? ` · page ${selected.source.page}`
+                  : ""}{" "}
+                · chunk {selected.source.chunk}
+              </p>
+            )}
             {selectedResult && (
               <dl>
                 <div>
@@ -435,11 +475,18 @@ export default function RealPanel({
               className="real-source-links"
               aria-label="Retrieved context sources"
             >
-              {state.contextIds.map((id) => (
-                <button type="button" key={id} onClick={() => onSelect(id)}>
-                  [{id}]
-                </button>
-              ))}
+              {state.contextIds.map((id) => {
+                const source = state.documents.find(
+                  (document) => document.id === id,
+                )?.source;
+                return (
+                  <button type="button" key={id} onClick={() => onSelect(id)}>
+                    {source
+                      ? `${source.fileName}${source.page ? ` · p. ${source.page}` : ""} · chunk ${source.chunk}`
+                      : `[${id}]`}
+                  </button>
+                );
+              })}
             </div>
             <p className="real-answer-caution">
               A small model can make mistakes. Verify the answer against the
@@ -453,15 +500,20 @@ export default function RealPanel({
         <summary>What the 3D clusters mean</summary>
         <p>
           Each point starts as a {state.dimensions || 384}-dimensional embedding
-          computed from its actual sample text. The app projects the vectors
-          into 3D for exploration. Neighborhoods can reveal related topics, but
-          projected positions, distances, and angles are approximate. Retrieval
-          always uses the original-dimensional embeddings.
+          computed from its actual{" "}
+          {isUploaded ? "uploaded chunk" : "sample text"}. The app projects the
+          vectors into 3D for exploration. Neighborhoods can reveal related
+          topics, but projected positions, distances, and angles are
+          approximate. Retrieval always uses the original-dimensional
+          embeddings.
         </p>
         <p>
-          Topic names and colors come from sample-document labels. They are not
-          model-generated classifications. Distinct-looking clusters are useful
-          visual evidence, not proof of semantic understanding.
+          {isUploaded
+            ? "Colors identify source files. Fewer than eight chunks use centered PCA rather than UMAP; a single chunk has no neighborhood to compare."
+            : "Topic names and colors come from sample-document labels."}{" "}
+          They are not model-generated classifications. Distinct-looking
+          clusters are useful visual evidence, not proof of semantic
+          understanding.
         </p>
       </details>
     </section>

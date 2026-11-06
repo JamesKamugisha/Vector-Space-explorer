@@ -1935,7 +1935,7 @@ export default function VectorScene(props: VectorSceneProps) {
       <div className="scene-labels" ref={labelHost} aria-hidden="true" />
       <div className="scene-space-note">
         {props.clusterMode
-          ? "UMAP projection · neighborhoods are approximate"
+          ? "3D projection · distances are approximate"
           : props.points &&
               props.normalizedPoints &&
               props.aiMetric === "euclidean"

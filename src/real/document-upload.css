@@ -1,0 +1,345 @@
+.document-upload {
+  padding: 18px;
+  border-bottom: 1px solid #e0e8f3;
+  color: #2e4b6c;
+  background: #f8fbff;
+}
+.document-upload * {
+  box-sizing: border-box;
+}
+.upload-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.upload-eyebrow {
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #3f566f;
+}
+.upload-local-badge {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #1c6b5e;
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: #e6f4ef;
+  white-space: nowrap;
+}
+.document-upload h3 {
+  color: #2a4d72;
+  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+.upload-intro {
+  font-size: 14px;
+  color: #3f566f;
+  margin: 0;
+  line-height: 1.85;
+}
+.upload-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  padding: 16px 10px 13px;
+  margin-top: 12px;
+  border: 1px dashed #9bb7db;
+  border-radius: 7px;
+  background: #fff;
+  color: #5179ad;
+}
+.upload-dropzone.dragging {
+  border-color: #396bb3;
+  background: #eaf2ff;
+  box-shadow: inset 0 0 0 1px #396bb3;
+}
+.upload-choose-button {
+  border: 1px solid #bed0e9;
+  border-radius: 5px;
+  padding: 8px 11px;
+  background: #edf4ff;
+  color: #355f98;
+  font: inherit;
+  font-size: 14px !important;
+  font-weight: 550 !important;
+}
+.upload-choose-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.upload-drop-hint {
+  color: #3f566f;
+  font-size: 14px;
+}
+.upload-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.upload-dropzone:focus-within {
+  outline: 3px solid #498aea;
+  outline-offset: 3px;
+}
+.document-upload button:focus-visible,
+.upload-privacy summary:focus-visible {
+  outline: 3px solid #498aea;
+  outline-offset: 3px;
+}
+.upload-limits {
+  color: #3f566f;
+  font-size: 14px;
+  line-height: 1.85;
+  margin: 9px 0 0;
+}
+.upload-progress {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #d5e2f4;
+  background: #edf4ff;
+  border-radius: 6px;
+  color: #3f638d;
+}
+.upload-progress > div {
+  display: flex;
+  gap: 7px;
+  justify-content: space-between;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.upload-progress strong {
+  flex-shrink: 0;
+}
+.upload-progress progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  accent-color: #3f75be;
+}
+.upload-progress p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+}
+.upload-error,
+.upload-warnings {
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid #e6c5bf;
+  background: #fff3ef;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: #853f32;
+  overflow-wrap: anywhere;
+}
+.upload-error p {
+  margin: 7px 0 0;
+}
+.upload-warnings {
+  border-color: #e5d4ad;
+  background: #fff8e9;
+  color: #775923;
+}
+.upload-warnings ul {
+  margin: 7px 0 0;
+  padding-left: 14px;
+}
+.upload-imported-summary {
+  margin-top: 13px;
+  padding: 11px;
+  background: #eef8f3;
+  border: 1px solid #c9e3d6;
+  border-radius: 6px;
+  color: #2c6250;
+}
+.upload-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 14px;
+}
+.upload-summary-heading > span {
+  color: #4c6b5f;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.upload-file-summary {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 8px;
+}
+.upload-file-summary li {
+  border-top: 1px solid #d1e6dc;
+  padding-top: 8px;
+}
+.upload-file-summary strong {
+  display: block;
+  color: #345e4f;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.upload-file-summary span {
+  display: block;
+  color: #4c6b5f;
+  font-size: 14px;
+  margin-top: 3px;
+}
+.upload-imported-summary > p {
+  font-size: 14px;
+  line-height: 1.85;
+  margin: 10px 0 0;
+  color: #486b5c;
+}
+.upload-use-samples {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid #cbd9ec;
+  border-radius: 5px;
+  background: #fff;
+  color: #40648e;
+  padding: 9px;
+  font-size: 14px !important;
+  margin-top: 11px;
+}
+.upload-privacy {
+  border-top: 1px solid #dce6f3;
+  padding-top: 11px;
+  margin-top: 13px;
+}
+.upload-privacy summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 550;
+  color: #4a6788;
+  line-height: 1.7;
+}
+.upload-privacy p {
+  font-size: 14px;
+  line-height: 1.85;
+  color: #3f566f;
+  margin: 9px 0 0;
+}
+.document-upload {
+  padding: 14px 18px;
+}
+.upload-dropzone {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 8px;
+}
+.upload-dropzone > svg {
+  width: 19px;
+  height: 19px;
+}
+.upload-drop-hint {
+  flex-basis: 100%;
+  text-align: center;
+}
+.document-upload h3 {
+  font-size: 14px;
+}
+.upload-intro {
+  font-size: 14px;
+  line-height: 1.75;
+}
+.document-upload.is-imported .upload-heading {
+  margin-bottom: 7px;
+}
+.document-upload.is-imported .upload-imported-summary {
+  margin-top: 0;
+  padding: 8px 9px;
+}
+.upload-management {
+  margin-top: 9px;
+}
+.upload-management > summary {
+  cursor: pointer;
+  color: #456789;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.7;
+}
+.upload-management > summary:focus-visible {
+  outline: 3px solid #498aea;
+  outline-offset: 3px;
+}
+.upload-management[open] > summary {
+  margin-bottom: 12px;
+}
+.upload-management > .upload-file-summary {
+  margin-top: 12px;
+}
+.upload-scope-note {
+  color: #3f566f;
+  font-size: 14px;
+  line-height: 1.85;
+  margin: 10px 0 0;
+}
+.document-upload.is-imported .upload-use-samples {
+  margin-top: 8px;
+  padding: 6px 8px;
+  font-size: 14px !important;
+}
+@media (max-width: 600px) {
+  .document-upload {
+    padding: 20px;
+  }
+  .upload-intro {
+    font-size: 14px;
+  }
+  .upload-dropzone {
+    padding: 18px 12px;
+  }
+  .upload-choose-button {
+    font-size: 14px !important;
+  }
+}
+
+.document-upload {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.upload-eyebrow,
+.upload-local-badge {
+  font-size: 12px;
+}
+.document-upload h3 {
+  font-size: 17px;
+}
+.upload-choose-button,
+.upload-use-samples {
+  font-size: 14px !important;
+  font-weight: 550 !important;
+}
+.upload-management > summary,
+.upload-privacy summary {
+  font-size: 14px;
+}

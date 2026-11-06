@@ -4,14 +4,19 @@ import {
   type RealRequest,
   type RealResponse,
   type RealState,
+  type RealDocument,
 } from "./types";
 
-export function useRealEmbeddings(count: number, enabled: boolean) {
+export function useRealEmbeddings(
+  count: number,
+  enabled: boolean,
+  documents: RealDocument[] | null = null,
+) {
   const [state, setState] = useState<RealState>(INITIAL_REAL_STATE);
   const worker = useRef<Worker | null>(null);
   const requestId = useRef(0);
-  const active = useRef({ count, enabled });
-  active.current = { count, enabled };
+  const active = useRef({ count, enabled, documents });
+  active.current = { count, enabled, documents };
 
   const send = useCallback(
     (
@@ -82,9 +87,15 @@ export function useRealEmbeddings(count: number, enabled: boolean) {
   );
 
   useEffect(() => {
-    if (enabled && ensureWorker()) send({ type: "initialize", count });
-    else send({ type: "cancel" });
-  }, [count, enabled, send, ensureWorker]);
+    if (enabled && ensureWorker()) {
+      setState({
+        ...INITIAL_REAL_STATE,
+        status: "loading",
+        message: "Preparing document embeddings…",
+      });
+      send({ type: "initialize", count, documents: documents ?? undefined });
+    } else send({ type: "cancel" });
+  }, [count, enabled, documents, send, ensureWorker]);
 
   const search = useCallback(
     (query: string) => {
@@ -100,7 +111,11 @@ export function useRealEmbeddings(count: number, enabled: boolean) {
   );
   const retry = useCallback(() => {
     if (active.current.enabled && ensureWorker())
-      send({ type: "initialize", count: active.current.count });
+      send({
+        type: "initialize",
+        count: active.current.count,
+        documents: active.current.documents ?? undefined,
+      });
   }, [send, ensureWorker]);
   return { state, search, generate, retry };
 }

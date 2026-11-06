@@ -6,7 +6,8 @@ import {
   type Text2TextGenerationPipeline,
 } from "@huggingface/transformers";
 import { UMAP } from "umap-js";
-import { REAL_CORPUS, REAL_CORPUS_HASH } from "./corpus";
+import { REAL_CORPUS, REAL_CORPUS_HASH, corpusHash } from "./corpus";
+import { fitSmallCorpusProjection } from "./projection";
 import { readEmbeddings, writeEmbeddings } from "./cache";
 import {
   cosineDistance,
@@ -36,6 +37,10 @@ const memory = new Map<string, number[]>();
 let activeDocuments: RealDocument[] = [];
 let activeEmbeddings: number[][] = [];
 let reducer: UMAP | undefined;
+let smallProjection: ReturnType<typeof fitSmallCorpusProjection> | undefined;
+let projectionKind: "umap" | "pca" = "umap";
+let privateHash = "";
+const privateMemory = new Map<string, number[]>();
 let center: Vec3 = [0, 0, 0];
 let displayScale = 1;
 const queryCache = new Map<string, { vector: number[]; position: Vec3 }>();
@@ -99,9 +104,38 @@ const positionFor = (position: number[]): Vec3 => {
   return result;
 };
 
-async function initialize(id: number, requestedCount: number) {
-  const count = Math.max(8, Math.min(500, Math.round(requestedCount)));
-  const documents = REAL_CORPUS.slice(0, count);
+async function initialize(
+  id: number,
+  requestedCount: number,
+  uploaded?: RealDocument[],
+) {
+  if (
+    uploaded &&
+    (!uploaded.length ||
+      uploaded.length > 500 ||
+      uploaded.some((document) => !document.text.trim()))
+  )
+    throw new Error("Import between 1 and 500 nonempty text chunks.");
+  const count = Math.max(
+    uploaded ? 1 : 8,
+    Math.min(uploaded?.length ?? 500, Math.round(requestedCount)),
+  );
+  const documents = (uploaded ?? REAL_CORPUS).slice(0, count);
+  const signature = uploaded ? corpusHash(uploaded) : "";
+  if (signature !== privateHash) {
+    privateMemory.clear();
+    privateHash = signature;
+  }
+  const vectors = uploaded ? privateMemory : memory;
+  const documentKey = uploaded
+    ? (document: RealDocument) =>
+        `${EMBEDDING_MODEL}:${signature}:${document.id}`
+    : keyFor;
+  activeDocuments = [];
+  activeEmbeddings = [];
+  reducer = undefined;
+  smallProjection = undefined;
+  queryCache.clear();
   emit(id, {
     status: "loading",
     progress: 0,
@@ -117,12 +151,17 @@ async function initialize(id: number, requestedCount: number) {
     error: undefined,
     contextIds: [],
   });
-  const cached = await readEmbeddings(documents.map(keyFor));
+  // Uploaded content and derived vectors stay in this worker's memory only.
+  const cached = uploaded
+    ? new Map<string, number[]>()
+    : await readEmbeddings(documents.map(keyFor));
   if (!isCurrent(id)) return;
-  cached.forEach((value, key) => memory.set(key, value));
+  cached.forEach((value, key) => vectors.set(key, value));
   const pipe = await loadExtractor(id);
   if (!isCurrent(id)) return;
-  const missing = documents.filter((document) => !memory.has(keyFor(document)));
+  const missing = documents.filter(
+    (document) => !vectors.has(documentKey(document)),
+  );
   const batchSize = 8;
   for (let start = 0; start < missing.length; start += batchSize) {
     if (!isCurrent(id)) return;
@@ -133,13 +172,15 @@ async function initialize(id: number, requestedCount: number) {
       message: `Computing actual 384-dimensional embeddings: ${count - missing.length + start} / ${count} documents.`,
     });
     const output = await pipe(
-      batch.map((document) => `${document.title}. ${document.text}`),
+      batch.map((document) =>
+        uploaded ? document.text : `${document.title}. ${document.text}`,
+      ),
       { pooling: "mean", normalize: true },
     );
-    const vectors = output.tolist() as number[][];
+    const computed = output.tolist() as number[][];
     if (
-      vectors.length !== batch.length ||
-      vectors.some(
+      computed.length !== batch.length ||
+      computed.some(
         (v) => v.length !== EMBEDDING_DIMENSIONS || !v.every(Number.isFinite),
       )
     )
@@ -147,38 +188,51 @@ async function initialize(id: number, requestedCount: number) {
         "The sentence model returned an unexpected embedding shape.",
       );
     const entries = batch.map((document, i): [string, number[]] => [
-      keyFor(document),
-      vectors[i],
+      documentKey(document),
+      computed[i],
     ]);
-    entries.forEach(([key, value]) => memory.set(key, value));
-    await writeEmbeddings(entries);
+    entries.forEach(([key, value]) => vectors.set(key, value));
+    if (!uploaded) await writeEmbeddings(entries);
   }
   if (!isCurrent(id)) return;
-  const embeddings = documents.map((document) => memory.get(keyFor(document))!);
+  const embeddings = documents.map((document) =>
+    vectors.get(documentKey(document))!,
+  );
+  projectionKind = count < 8 ? "pca" : "umap";
   emit(id, {
     status: "projecting",
     progress: 0,
-    message: `Fitting unsupervised 3D UMAP to ${count} real sentence embeddings. Topic colors do not determine positions.`,
+    message:
+      count < 8
+        ? `Computing a centered PCA view of ${count} chunks. Small corpora do not support a meaningful 3D UMAP neighborhood.`
+        : `Fitting unsupervised 3D UMAP to ${count} real sentence embeddings. Colors do not determine positions.`,
   });
-  const umap = new UMAP({
-    nComponents: 3,
-    nNeighbors: Math.min(15, count - 1),
-    minDist: 0.16,
-    spread: 1.15,
-    nEpochs: 300,
-    random: seededRandom(71337 + count),
-    distanceFn: cosineDistance,
-  });
-  const positions = await umap.fitAsync(embeddings, (epoch) => {
-    if (!isCurrent(id)) return false;
-    if (epoch % 15 === 0)
-      emit(id, {
-        status: "projecting",
-        progress: epoch / 300,
-        message: `Optimizing 3D UMAP · epoch ${epoch} / 300. Search still uses all 384 dimensions.`,
-      });
-    return true;
-  });
+  let positions: number[][];
+  if (count < 8) {
+    smallProjection = fitSmallCorpusProjection(embeddings);
+    positions = smallProjection.positions;
+  } else {
+    const umap = new UMAP({
+      nComponents: 3,
+      nNeighbors: Math.min(15, count - 1),
+      minDist: 0.16,
+      spread: 1.15,
+      nEpochs: 300,
+      random: seededRandom(71337 + count),
+      distanceFn: cosineDistance,
+    });
+    positions = await umap.fitAsync(embeddings, (epoch) => {
+      if (!isCurrent(id)) return false;
+      if (epoch % 15 === 0)
+        emit(id, {
+          status: "projecting",
+          progress: epoch / 300,
+          message: `Optimizing 3D UMAP · epoch ${epoch} / 300. Search still uses all 384 dimensions.`,
+        });
+      return true;
+    });
+    reducer = umap;
+  }
   if (!isCurrent(id)) return;
   center = [0, 1, 2].map(
     (axis) =>
@@ -186,7 +240,7 @@ async function initialize(id: number, requestedCount: number) {
       positions.length,
   ) as Vec3;
   const maxRadius = Math.max(
-    1e-6,
+    0.2,
     ...positions.map((position) =>
       Math.hypot(
         position[0] - center[0],
@@ -198,12 +252,12 @@ async function initialize(id: number, requestedCount: number) {
   displayScale = 5 / maxRadius;
   activeDocuments = documents;
   activeEmbeddings = embeddings;
-  reducer = umap;
   queryCache.clear();
   emit(id, {
     status: "ready",
     progress: 1,
-    message: `${count} documents embedded by MiniLM and projected with 3D UMAP. Colors identify authored topics; positions are learned from text.`,
+    projection: projectionKind,
+    message: `${count} ${uploaded ? "uploaded chunks" : "sample documents"} embedded by MiniLM and projected with ${projectionKind === "pca" ? "PCA for a small corpus" : "3D UMAP"}. Colors identify ${uploaded ? "source files" : "authored topics"}; positions are computed from text embeddings.`,
     documents,
     points: documents.map((document, i) => ({
       id: document.id,
@@ -215,7 +269,7 @@ async function initialize(id: number, requestedCount: number) {
 }
 
 async function search(id: number, rawQuery: string) {
-  if (!reducer || !activeEmbeddings.length)
+  if ((!reducer && !smallProjection) || !activeEmbeddings.length)
     throw new Error("Load the document embeddings before searching.");
   const query = rawQuery.trim().slice(0, 400);
   if (!query) throw new Error("Enter a question or phrase to search.");
@@ -239,7 +293,9 @@ async function search(id: number, rawQuery: string) {
       !vector.every(Number.isFinite)
     )
       throw new Error("The query embedding has an unexpected shape.");
-    const [projection] = reducer.transform([vector]);
+    const projection = smallProjection
+      ? smallProjection.transform(vector)
+      : reducer!.transform([vector])[0];
     encoded = { vector, position: positionFor(projection) };
     queryCache.set(query, encoded);
   }
@@ -256,8 +312,7 @@ async function search(id: number, rawQuery: string) {
     queryPosition: encoded.position,
     searchedQuery: query,
     results,
-    message:
-      "Ranked by original 384-dimensional cosine similarity. The query uses the fitted UMAP transform; visible 3D distances are approximate.",
+    message: `Ranked by original 384-dimensional cosine similarity. The query uses the fitted ${projectionKind.toUpperCase()} transform; visible 3D distances are approximate.`,
   });
   return results;
 }
@@ -270,7 +325,7 @@ async function generate(id: number, query: string) {
     status: "answering",
     progress: 0,
     message:
-      "Loading the local FLAN-T5 answer model on demand. The three retrieved passages provide the context.",
+      "Loading the local FLAN-T5 answer model on demand. Retrieved passages provide the context.",
     contextIds,
     answer: undefined,
   });
@@ -314,7 +369,7 @@ self.onmessage = (event: MessageEvent<RealRequest>) => {
     if (!isCurrent(request.id)) return;
     try {
       if (request.type === "initialize")
-        await initialize(request.id, request.count);
+        await initialize(request.id, request.count, request.documents);
       else if (request.type === "search")
         await search(request.id, request.query);
       else await generate(request.id, request.query);

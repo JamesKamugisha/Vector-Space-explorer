@@ -15,11 +15,13 @@
     "format": "prettier --write src tests *.json *.ts eslint.config.js",
     "format:check": "prettier --check src tests *.json *.ts eslint.config.js",
     "profile:scene": "node scripts/profile-scene.mjs",
-    "verify:real": "node scripts/verify-real-mode.mjs"
+    "verify:real": "node scripts/verify-real-mode.mjs",
+    "verify:upload": "node scripts/verify-upload-mode.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.2",
     "lucide-react": "^0.468.0",
+    "pdfjs-dist": "6.5.438",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.181.0",
