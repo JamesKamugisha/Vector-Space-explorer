@@ -174,6 +174,8 @@ test("AI instructions and point controls remain usable across desktop and mobile
     const suffix = width === 390 ? "mobile" : String(width);
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1100 });
     await page.goto("/");
+    if (width === 390)
+      await page.getByRole("button", { name: /Experiment controls/ }).click();
     await page.getByRole("button", { name: /AI & LLM Lab/ }).click();
     const count = page.getByLabel(/number of points/i);
     await count.fill("500");

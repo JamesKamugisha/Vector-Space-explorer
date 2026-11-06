@@ -84,12 +84,11 @@ test("mobile controls collapse above the scene and remain keyboard accessible", 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   const toggle = page.getByRole("button", { name: /Experiment controls/ });
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
-  await toggle.click();
-  await expect(page.getByLabel("Choose an operation")).not.toBeVisible();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByLabel("Choose an operation")).not.toBeVisible();
   await toggle.press("Enter");
   await expect(page.getByLabel("Choose an operation")).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

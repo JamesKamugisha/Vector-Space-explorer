@@ -1,5 +1,15 @@
 # Vector Space Explorer Delivery Verification
 
+## Responsive workspace refinement
+
+Reduced the header and introduction spacing and sized the canvas from viewport height, keeping the full scene and its camera controls visible initially. The right instructions sidebar and larger text remain. Detailed results continue below the scene in normal page flow; the page is not locked against scrolling.
+
+At widths up to 900px, controls start collapsed and remain available through the keyboard-accessible **Experiment controls** button. Phone layouts omit duplicate introductory descriptions, use touch-specific camera hints, and retain the five AI stages in a focusable horizontal strip. Inputs and file import remain accessible when controls expand.
+
+New browser checks cover full-scene fit in both labs at 1920×1080, 1440×900, 1366×768, 1280×720, 1024×768, and 1280×600; phone/tablet fit and usable controls at 390×844, 375×812, 320×740, and 768×1024; and actual one-finger orbit plus two-finger zoom in Chrome touch emulation. Small-screen accessibility, horizontal overflow, and preservation of numeric results are checked. Real-mode layout tests deliberately block model downloads and do not claim new model-inference verification.
+
+Lint, formatting, strict TypeScript, production build, and 62 unit tests pass. The expanded browser suite contains 35 cases. Its new mobile accessibility check exposed an empty real-mode color legend during model failure; that legend is now omitted until data exists and has an explicit group role when shown. The three responsive/touch/accessibility checks pass after the fix. Desktop and phone screenshots in the ignored local artifacts folder were visually reviewed; broader physical-device testing remains separate from Chrome emulation.
+
 Verified November 5, 2026, on Windows with Node.js 24, npm 11, and installed Google Chrome through Playwright.
 
 ## Passing checks

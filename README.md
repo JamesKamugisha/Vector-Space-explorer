@@ -31,6 +31,7 @@ npm run preview
 - Real-model mode: 384-dimensional MiniLM sentence embeddings, a seeded 3D UMAP view of up to 500 authored sample passages across six topics, full-dimensional semantic retrieval, and on-demand local FLAN-T5 generation from retrieved context.
 - Private PDF/TXT/Markdown import with real extracted chunks, filename/page/chunk references, file colors, and a 1–N point count that also sets the retrieval scope. Small imported corpora use centered PCA; larger ones use UMAP.
 - Contextual right-hand instructions sidebar, collapsible mobile controls, larger high-contrast teaching text, brighter canvas labels, keyboard vector inspection, focus-visible states, reduced-motion playback, and WebGL fallback.
+- Viewport-sized 3D workspace with reduced desktop top spacing. Phone and portrait-tablet controls start collapsed so the scene is visible immediately; expand **Experiment controls** to edit inputs or import files. Phone camera hints describe touch gestures, and the AI workflow strip can scroll horizontally with touch or keyboard focus.
 
 ## Mathematical and teaching conventions
 

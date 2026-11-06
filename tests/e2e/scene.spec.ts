@@ -283,6 +283,8 @@ test("scene dense-cloud labels remain separate and inside reserved viewport boun
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/");
+    if (viewport.width === 390)
+      await page.getByRole("button", { name: /Experiment controls/ }).click();
     await page.getByRole("button", { name: /AI & LLM Lab/ }).click();
     await page.getByLabel(/number of points/i).fill("500");
     await page.getByLabel("Plot normalized directions").check();

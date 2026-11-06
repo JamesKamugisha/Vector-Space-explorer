@@ -307,7 +307,9 @@ export default function App() {
   const [showLabels, setShowLabels] = useState(true);
   const [showNormShells, setShowNormShells] = useState(false);
   const [showReferencePlanes, setShowReferencePlanes] = useState(false);
-  const [controlsOpen, setControlsOpen] = useState(true);
+  const [controlsOpen, setControlsOpen] = useState(
+    () => !window.matchMedia("(max-width: 900px)").matches,
+  );
   const [inspectedVector, setInspectedVector] = useState("u");
   const [clickedVector, setClickedVector] = useState<{
     id: string;
@@ -1003,6 +1005,7 @@ export default function App() {
             <div
               className="ai-learning-path"
               role="list"
+              tabIndex={0}
               aria-label="Embedding and retrieval learning flow"
             >
               {[
@@ -1207,11 +1210,15 @@ export default function App() {
               )}
             </div>
             <div className="scene-bottom-bar">
-              <span>
+              <span className="scene-pointer-hint">
                 <MousePointer2 size={12} />
                 Drag to orbit<span className="interaction-separator">·</span>
                 Scroll to zoom<span className="interaction-separator">·</span>
                 Right-drag to pan
+              </span>
+              <span className="scene-touch-hint">
+                <MousePointer2 size={12} />
+                Drag to orbit · Pinch to zoom
               </span>
               <button onClick={() => setResetKey((key) => key + 1)}>
                 <RotateCcw size={12} />
@@ -1270,9 +1277,10 @@ export default function App() {
               )}
             </div>
           </div>
-          {isReal && (
+          {isReal && realClusterLabels.length > 0 && (
             <div
               className="real-topic-legend"
+              role="group"
               aria-label="Cluster topic colors"
             >
               {realClusterLabels.map((topic) => (
