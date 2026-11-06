@@ -538,9 +538,22 @@ try {
   assert.deepEqual(report.accessibility, []);
   await pickAnotherUploadPoint();
   await page.locator(".real-answer").scrollIntoViewIfNeeded();
+  await page.locator(".real-answer").evaluate((element) => {
+    let parent = element.parentElement;
+    while (parent) {
+      if (
+        parent.scrollHeight > parent.clientHeight &&
+        ["auto", "scroll"].includes(getComputedStyle(parent).overflowY)
+      )
+        parent.scrollTop = parent.scrollHeight;
+      parent = parent.parentElement;
+    }
+    window.scrollTo(0, 0);
+  });
+  await page.mouse.move(10, 10);
   await page.screenshot({
     path: join(artifactDirectory, "upload-20-rag-desktop.png"),
-    fullPage: true,
+    fullPage: false,
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator(".scene-card").scrollIntoViewIfNeeded();
