@@ -63,7 +63,7 @@ npm run typecheck
 npm run test:e2e
 ```
 
-Browser tests use installed Google Chrome through Playwright. If Chrome is unavailable, install its official Playwright-managed distribution with `npx playwright install chrome`. Browser tests start a local Vite server on port 5174 automatically when needed. To test a deployment, set `TEST_BASE_URL` to its URL before running the suite.
+Browser tests use installed Google Chrome through Playwright. If Chrome is unavailable, install its official Playwright-managed distribution with `npx playwright install chrome`. Browser tests start a local Vite server on port 5174 automatically when needed. CI runs against the built production artifact with Vite preview after the build step. To test a deployment, set `TEST_BASE_URL` to its URL before running the suite.
 
 Tests verify numerical identities and edge cases, all lesson interactions, scenario changes, input/playback synchronization, AI ranking and source provenance, mobile overflow, reduced motion, and WebGL fallback. The real-mode failure-handling browser test deliberately aborts model downloads and checks errors/retry without mocking successful inference. Passing that test does not verify actual model loading, semantic quality, or generation. See `VERIFICATION.md` for the recorded delivery checks and practical limits.
 

@@ -9,6 +9,8 @@ test("real embedding mode discloses its models and handles failed downloads with
 }) => {
   test.setTimeout(60000);
   let modelRequests = 0;
+  const workerErrors: string[] = [];
+  page.on("pageerror", (error) => workerErrors.push(error.message));
   // Model fetches originate in a dedicated worker, so intercept at context scope.
   await context.route("https://huggingface.co/**", (route) => {
     modelRequests++;
@@ -40,7 +42,17 @@ test("real embedding mode discloses its models and handles failed downloads with
     panel.getByRole("button", { name: /Generate answer from sources/ }),
   ).toBeDisabled();
   await expect(panel.locator(".real-result")).toHaveCount(0);
-  await expect(panel.getByRole("alert")).toBeVisible({ timeout: 30000 });
+  try {
+    await expect(panel.getByRole("alert")).toBeVisible({ timeout: 30000 });
+  } catch (error) {
+    console.log("REAL_WORKER_FAILURE_DIAGNOSTICS", {
+      modelRequests,
+      status: await panel.locator(".real-status").allTextContents(),
+      progress: await panel.locator(".real-progress-label").allTextContents(),
+      workerErrors,
+    });
+    throw error;
+  }
   await expect(panel.getByRole("alert")).toContainText("Hugging Face");
   const beforeRetry = modelRequests;
   await panel
